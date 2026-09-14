@@ -210,7 +210,9 @@ TK-A7KD-9M2Q-X4ZT-P8CN,user001,DemoPass2026!,JBSWY3DPEHPK3PXP,active
   "code": "123456",
   "accountId": "user001",
   "timeLeft": 28,
-  "expiresAt": 1780000000000
+  "expiresAt": 1780000000000,
+  "nextCode": "654321",
+  "nextExpiresAt": 1780000030000
 }
 ```
 
@@ -222,7 +224,7 @@ TK-A7KD-9M2Q-X4ZT-P8CN,user001,DemoPass2026!,JBSWY3DPEHPK3PXP,active
 - `SECRET_INVALID`
 - `SERVER_ERROR`
 
-公开页展示规则：首个验证码不会等待下一个 00 秒或 30 秒边界，而是立即展示当前标准 TOTP。首码的剩余时间可能小于 30 秒，这是它真实有效期的剩余部分；到期后页面自动请求并展示一次下一个时间片的验证码。第二个验证码展示完整时间片后结束显示，不会继续刷新第三个验证码。
+公开页展示规则：首个验证码不会等待下一个 00 秒或 30 秒边界，而是立即展示当前标准 TOTP。首码的剩余时间可能小于 30 秒，这是它真实有效期的剩余部分；接口会在消费一次性 Token 时预计算下一个时间片，首码到期后页面自动切换并展示一次第二码。第二个验证码展示完整时间片后结束显示，不会继续刷新第三个验证码。
 
 ### POST `/api/admin/import-csv`
 

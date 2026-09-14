@@ -572,7 +572,14 @@
                     return;
                 }
 
-                showCodeAndStartTimer(result.code, result.expiresAt, token, sessionId, 0);
+                showCodeAndStartTimer(
+                    result.code,
+                    result.expiresAt,
+                    result.nextCode,
+                    result.nextExpiresAt,
+                    sessionId,
+                    0
+                );
             } catch (error) {
                 if (sessionId !== activeSessionId) {
                     return;
@@ -583,27 +590,8 @@
             }
         }
 
-        async function refreshCodeAtExpiry(token, sessionId, refreshCount) {
-            try {
-                const result = await requestTokenCode(token);
-
-                if (sessionId !== activeSessionId) {
-                    return;
-                }
-
-                showCodeAndStartTimer(result.code, result.expiresAt, token, sessionId, refreshCount);
-            } catch (error) {
-                if (sessionId !== activeSessionId) {
-                    return;
-                }
-
-                alert(error.message || "生成新验证码失败，请重新输入授权码。");
-                resetToInput();
-            }
-        }
-
         // 立即展示当前口令，失效后仅自动刷新一次
-        function showCodeAndStartTimer(code, expiresAt, token, sessionId, refreshCount) {
+        function showCodeAndStartTimer(code, expiresAt, nextCode, nextExpiresAt, sessionId, refreshCount) {
             if (sessionId !== activeSessionId) {
                 return;
             }
@@ -634,8 +622,15 @@
                 clearInterval(masterInterval);
                 masterInterval = null;
 
-                if (shouldRefreshCode(refreshCount)) {
-                    refreshCodeAtExpiry(token, sessionId, refreshCount + 1);
+                if (shouldRefreshCode(refreshCount) && nextCode && nextExpiresAt) {
+                    showCodeAndStartTimer(
+                        nextCode,
+                        nextExpiresAt,
+                        null,
+                        null,
+                        sessionId,
+                        refreshCount + 1
+                    );
                 } else {
                     lockExpiredCode();
                 }

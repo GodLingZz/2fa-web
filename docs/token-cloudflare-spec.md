@@ -29,7 +29,7 @@
 - `2fa-verify.html` 不再包含 `mockDatabase` 或任何真实 TOTP 密钥。
 - 公开 token 校验调用 `POST /api/token/verify`。
 - API 响应永远不包含 `totp_secret` 或解密后的密钥内容。
-- 有效且启用的 token 在 `mode: "check"` 下返回 `accountId` 和 `accountPassword`，不消耗 token；确认使用后返回 6 位验证码、`accountId`、`timeLeft`、`expiresAt`，并将该 token 标记为 `used`。
+- 有效且启用的 token 在 `mode: "check"` 下返回 `accountId` 和 `accountPassword`，不消耗 token；确认使用后返回当前 6 位验证码、下一个时间片的 `nextCode`、`accountId`、`timeLeft`、`expiresAt`、`nextExpiresAt`，并将该 token 标记为 `used`。
 - 无效、停用、格式错误或缺失 token 都返回清晰的 JSON 错误。
 - 管理员 CSV 导入同时支持有 `token_code` 和没有 `token_code` 的行。
 - 空 `token_code` 会被替换为高随机性自动生成 token。
@@ -516,8 +516,8 @@ npx wrangler pages dev . --compatibility-date=2025-12-01
 
 - 公开页面移除 OTPAuth CDN、`mockDatabase`、`currentSecret` 和浏览器端 TOTP 生成逻辑。
 - 用户提交 token 后先调用 `POST /api/token/verify` 的 `mode: "check"` 只检查可用性，不消耗 token。
-- 到达真实 TOTP 30 秒边界后再次调用 `POST /api/token/verify` 发放验证码，并在成功响应后消耗 token。
-- 成功响应使用服务端返回的 `code`、`timeLeft`、`expiresAt` 驱动展示和倒计时。
+- 确认使用后立即调用 `POST /api/token/verify` 发放验证码；接口同时预计算下一个时间片，页面在真实 TOTP 边界切换第二码，不重复调用或消费 token。
+- 成功响应使用服务端返回的 `code`、`nextCode`、`timeLeft`、`expiresAt`、`nextExpiresAt` 驱动两阶段展示和倒计时。
 - 登录页提供明确登录按钮和登录状态提示；登录成功后跳转到管理台页面。
 - 管理台支持 CSV 输入、上传、手动生成、导出未使用 token 和 token 元数据展示，不显示 secret。
 

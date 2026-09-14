@@ -20,15 +20,16 @@ test("immediately shows the first code, refreshes once, then expires", async ({ 
     }
 
     verifyRequests += 1;
-    const code = verifyRequests === 1 ? "111111" : "222222";
     await route.fulfill({
       contentType: "application/json",
       body: JSON.stringify({
         ok: true,
-        code,
+        code: "111111",
         accountId: "playwright-user",
         timeLeft: 1,
-        expiresAt: Date.now() + (verifyRequests === 1 ? 1_000 : 1_500)
+        expiresAt: Date.now() + 1_000,
+        nextCode: "222222",
+        nextExpiresAt: Date.now() + 2_500
       })
     });
   });
@@ -45,7 +46,7 @@ test("immediately shows the first code, refreshes once, then expires", async ({ 
   await expect(page.locator('[id="2fa-code"]')).toHaveText("111 111");
   await expect(page.locator("#waiting-zone")).toBeHidden();
 
-  await expect.poll(() => verifyRequests, { timeout: 3_000 }).toBe(2);
+  await expect.poll(() => page.locator('[id="2fa-code"]').innerText(), { timeout: 3_000 }).toBe("222 222");
   await expect(page.locator('[id="2fa-code"]')).toHaveText("222 222");
   await expect(page.locator("#time-left")).not.toHaveText("0s");
 
@@ -53,5 +54,5 @@ test("immediately shows the first code, refreshes once, then expires", async ({ 
   await expect(page.locator('[id="2fa-code"]')).toHaveText("--- ---");
   await expect(page.locator("#status-badge")).toContainText("口令已失效");
   await expect(page.locator("#time-left")).toHaveText("0s");
-  expect(verifyRequests).toBe(2);
+  expect(verifyRequests).toBe(1);
 });

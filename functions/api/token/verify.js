@@ -61,6 +61,8 @@ export async function onRequest(context) {
     const counter = Math.floor(now / 1000 / TOTP_PERIOD_SECONDS);
     const code = await generateTotp(secretBytes, counter);
     const expiresAt = (counter + 1) * TOTP_PERIOD_SECONDS * 1000;
+    const nextCode = await generateTotp(secretBytes, counter + 1);
+    const nextExpiresAt = (counter + 2) * TOTP_PERIOD_SECONDS * 1000;
     const consumed = await consumeActiveToken(context.env.DB, tokenCode);
 
     if (!consumed) {
@@ -72,7 +74,9 @@ export async function onRequest(context) {
       code,
       accountId: row.account_id,
       timeLeft: Math.max(0, Math.ceil((expiresAt - now) / 1000)),
-      expiresAt
+      expiresAt,
+      nextCode,
+      nextExpiresAt
     });
   } catch (err) {
     if (err instanceof SecretFormatError) {

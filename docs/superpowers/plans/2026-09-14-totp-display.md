@@ -4,7 +4,7 @@
 
 **Goal:** 让公开 2FA 页面立即显示当前标准 TOTP，自动刷新一次第二码并在第二码结束后复用现有失效 UI。
 
-**Architecture:** 保持 Cloudflare Pages Function `/api/token/verify` 和标准 TOTP 算法不变，只重构 `2fa-verify.html` 的前端展示会话。用 `expiresAt` 驱动绝对时间倒计时，用会话 ID 和一次性刷新标记保证最多展示两个码且旧异步请求不能污染新会话。
+**Architecture:** 扩展 Cloudflare Pages Function `/api/token/verify` 在消费一次性 Token 时预计算并返回下一个时间片的验证码；重构 `2fa-verify.html` 的前端展示会话，只在边界到达时切换到该预计算值。用 `expiresAt`/`nextExpiresAt` 驱动绝对时间倒计时，用会话 ID 和一次性刷新标记保证最多展示两个码且旧异步请求不能污染新会话。
 
 **Tech Stack:** 静态 HTML/原生 JavaScript、Cloudflare Pages Functions、Cloudflare D1、Node.js `node:test`、Playwright/浏览器自动化、Wrangler Pages Direct Upload。
 
@@ -15,7 +15,7 @@
 - 第二码结束后沿用现有 `lockExpiredCode()` 失效表现。
 - 不在前端保存、暴露或生成 TOTP secret。
 - 所有新增界面文案使用简体中文。
-- 不改数据库迁移、Token 消费语义或管理端接口。
+- 不改数据库迁移或 Token 消费语义；公开接口仅增加 `nextCode` 和 `nextExpiresAt` 响应字段。
 
 ---
 
@@ -90,12 +90,12 @@ git commit -m "test: define TOTP display timing rules"
 - Modify: `2fa-verify.html:578-650`
 
 **Interfaces:**
-- Consumes: `requestTokenCode(tokenCode)` response `{ code, timeLeft, expiresAt }` and helpers from `scripts/totp-display.mjs` copied into the inline page runtime through equivalent local functions.
-- Produces: immediate first-code display; one automatic second-code refresh; existing `lockExpiredCode()` final state.
+- Consumes: `requestTokenCode(tokenCode)` response `{ code, timeLeft, expiresAt, nextCode, nextExpiresAt }` and helpers from `scripts/totp-display.mjs` copied into the inline page runtime through equivalent local functions.
+- Produces: immediate first-code display; one automatic switch to the precomputed second code; existing `lockExpiredCode()` final state.
 
 - [ ] **Step 1: Write the failing browser assertion**
 
-Add a Playwright check script that intercepts `/api/token/verify`, returns `timeLeft: 12` and a future `expiresAt`, clicks the confirmation flow, and asserts the waiting zone never becomes visible and the code zone shows the first code immediately. Add a second response with a distinct code and assert only one refresh occurs.
+Add a Playwright check script that intercepts `/api/token/verify`, returns `timeLeft: 1`, `expiresAt`, `nextCode`, and `nextExpiresAt`, clicks the confirmation flow, and asserts the waiting zone never becomes visible, the code zone shows the first code immediately, and the precomputed second code appears after one boundary without a second verify request.
 
 - [ ] **Step 2: Run the browser assertion to verify it fails**
 
@@ -119,11 +119,11 @@ async function startCodeSession(token, sessionId) {
 }
 ```
 
-Update `showCodeAndStartTimer` to compute `timeLeft` from `expiresAt - Date.now()`, track `phase` and `refreshCount`, and on first expiry call `requestTokenCode` once. On second expiry call `lockExpiredCode()` without another request. Every timer callback must first compare `sessionId` with `activeSessionId`.
+Update `functions/api/token/verify.js` to compute `nextCode` for `counter + 1` and `nextExpiresAt` without a second database update. Update `showCodeAndStartTimer` to compute `timeLeft` from `expiresAt - Date.now()`, track `refreshCount`, and on first expiry switch to `{ nextCode, nextExpiresAt }` without another request. On second expiry call `lockExpiredCode()`. Every timer callback must first compare `sessionId` with `activeSessionId`.
 
 - [ ] **Step 4: Run browser assertion to verify it passes**
 
-Run the same Playwright check. Expected: first response displays immediately; expiry triggers exactly one second request; second response displays; final expiry locks the code.
+Run the same Playwright check. Expected: the single verify response displays immediately; expiry switches to its precomputed second code; no second verify request occurs; final expiry locks the code.
 
 - [ ] **Step 5: Commit**
 
