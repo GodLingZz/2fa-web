@@ -1,0 +1,693 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2FA 安全验证中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { 
+            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%); 
+            color: #1e293b; 
+            min-height: 100vh; 
+            display: flex; 
+            align-items: flex-start; 
+            justify-content: center; 
+            margin: 0; 
+            padding: 1rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255, 255, 255, 0.6); 
+            border-radius: 1.5rem; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0,0,0,0.02); 
+        }
+        .code-display { 
+            font-size: clamp(2rem, 7vw, 3.35rem); 
+            letter-spacing: 0.08em; 
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-weight: 800; 
+            color: #0f172a; 
+            font-variant-numeric: tabular-nums; 
+            white-space: nowrap; 
+            max-width: 100%;
+        }
+        .code-box {
+            min-width: 0;
+        }
+        @media (max-width: 420px) {
+            body {
+                padding: 0.75rem;
+            }
+            .glass-card {
+                padding: 1.25rem !important;
+            }
+            .code-display {
+                font-size: clamp(1.75rem, 8.5vw, 2.15rem);
+                letter-spacing: 0.04em;
+            }
+            #copy-btn-area {
+                width: 5rem;
+            }
+            #copy-icon {
+                font-size: 1.5rem;
+                margin-bottom: 0.35rem;
+            }
+            #copy-text {
+                font-size: 0.75rem;
+                line-height: 1rem;
+            }
+        }
+        .progress-bar { 
+            height: 6px; 
+            background: #3b82f6; 
+            width: 100%; 
+            transition: width 1s linear, background-color 0.3s ease; 
+            border-radius: 999px; 
+        }
+        .input-glow:focus {
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+        }
+        /* GPT icon */
+        .openai-css-icon {
+            width: 40px;
+            height: 40px;
+            display: block;
+            color: #111827;
+        }
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(15, 23, 42, 0.38);
+            backdrop-filter: blur(10px);
+        }
+        .confirm-overlay.is-open {
+            display: flex;
+        }
+        .account-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 0.75rem;
+            align-items: center;
+            padding: 0.9rem 0;
+            border-top: 1px solid #e8eef6;
+        }
+        .account-row:first-child {
+            border-top: 0;
+            padding-top: 0;
+        }
+        .copy-mini {
+            height: 2.15rem;
+            width: 2.15rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.65rem;
+            color: #2563eb;
+            background: #eff6ff;
+            transition: transform 140ms ease, background-color 140ms ease;
+        }
+        .copy-mini:hover {
+            background: #dbeafe;
+        }
+        .copy-mini:active {
+            transform: scale(0.97);
+        }
+        .guide-shot {
+            width: 100%;
+            max-height: 8rem;
+            object-fit: contain;
+            border-radius: 1rem;
+            background: #fff;
+            border: 1px solid #e8eef6;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-card w-full max-w-md p-8 relative overflow-hidden transition-all duration-300 my-4">
+        
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <svg class="openai-css-icon" viewBox="0 0 16 16" aria-hidden="true" role="img">
+                    <path fill="currentColor" d="M14.949 6.547a3.94 3.94 0 0 0-.348-3.273 4.11 4.11 0 0 0-4.4-1.934A4.1 4.1 0 0 0 8.423.2 4.15 4.15 0 0 0 6.305.086a4.1 4.1 0 0 0-1.891.948 4.04 4.04 0 0 0-1.158 1.753 4.1 4.1 0 0 0-1.563.679A4 4 0 0 0 .554 4.72a3.99 3.99 0 0 0 .502 4.731 3.94 3.94 0 0 0 .346 3.274 4.11 4.11 0 0 0 4.402 1.933c.382.425.852.764 1.377.995.526.231 1.095.35 1.67.346 1.78.002 3.358-1.132 3.901-2.804a4.1 4.1 0 0 0 1.563-.68 4 4 0 0 0 1.14-1.253 3.99 3.99 0 0 0-.506-4.716m-6.097 8.406a3.05 3.05 0 0 1-1.945-.694l.096-.054 3.23-1.838a.53.53 0 0 0 .265-.455v-4.49l1.366.778q.02.011.025.035v3.722c-.003 1.653-1.361 2.992-3.037 2.996m-6.53-2.75a2.95 2.95 0 0 1-.36-2.01l.095.057L5.29 12.09a.53.53 0 0 0 .527 0l3.949-2.246v1.555a.05.05 0 0 1-.022.041L6.473 13.3c-1.454.826-3.311.335-4.15-1.098m-.85-6.94A3.02 3.02 0 0 1 3.07 3.949v3.785a.51.51 0 0 0 .262.451l3.93 2.237-1.366.779a.05.05 0 0 1-.048 0L2.585 9.342a2.98 2.98 0 0 1-1.113-4.094zm11.216 2.571L8.747 5.576l1.362-.776a.05.05 0 0 1 .048 0l3.265 1.86a3 3 0 0 1 1.173 1.207 2.96 2.96 0 0 1-.27 3.2 3.05 3.05 0 0 1-1.36.997V8.279a.52.52 0 0 0-.276-.445m1.36-2.015-.097-.057-3.226-1.855a.53.53 0 0 0-.53 0L6.249 6.153V4.598a.04.04 0 0 1 .019-.04L9.533 2.7a3.07 3.07 0 0 1 3.257.139c.474.325.843.778 1.066 1.303.223.526.289 1.103.191 1.664zM5.503 8.575 4.139 7.8a.05.05 0 0 1-.026-.037V4.049c0-.57.166-1.127.476-1.607s.752-.864 1.275-1.105a3.08 3.08 0 0 1 3.234.41l-.096.054-3.23 1.838a.53.53 0 0 0-.265.455zm.742-1.577 1.758-1 1.762 1v2l-1.755 1-1.762-1z"/>
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold mb-2 text-slate-800">安全验证中心</h1>
+        </div>
+
+        <div id="step-input" class="space-y-5">
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-key text-slate-400"></i>
+                </div>
+                <input type="text" id="token" class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-slate-200 focus:border-blue-500 outline-none transition-all font-mono text-lg text-slate-700 bg-white/50 input-glow" placeholder="输入Token：TK-XXXX" autocomplete="off">
+            </div>
+            <button id="submit-btn" class="w-full py-3.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:transform active:scale-[0.98] transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+                <span>验证授权码</span>
+                <i class="fa-solid fa-arrow-right text-sm"></i>
+            </button>
+        </div>
+
+        <div id="step-guide" class="hidden w-full">
+            <div class="mb-5 rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
+                <div class="mb-1 flex items-center gap-2 text-sm font-black text-blue-700">
+                    <i class="fa-solid fa-circle-check"></i>
+                    Token 已通过校验
+                </div>
+                <p class="text-sm leading-6 text-slate-600">请先使用下方账号完成 Google 登录，回到本页后再点击确认使用 Token。</p>
+            </div>
+
+            <section class="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div class="account-row">
+                    <div class="min-w-0">
+                        <p class="text-xs font-black text-slate-400">分配账号</p>
+                        <p id="account-text" class="mt-1 truncate font-mono text-sm font-bold text-slate-800">--</p>
+                    </div>
+                    <button class="copy-mini" type="button" data-copy-target="account" aria-label="复制账号">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                </div>
+                <div class="account-row">
+                    <div class="min-w-0">
+                        <p class="text-xs font-black text-slate-400">登录密码</p>
+                        <p id="password-text" class="mt-1 truncate font-mono text-sm font-bold text-slate-800">--</p>
+                    </div>
+                    <button class="copy-mini" type="button" data-copy-target="password" aria-label="复制密码">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                </div>
+            </section>
+
+            <section class="mb-5 rounded-2xl border border-slate-200 bg-white/80 p-4">
+                <div class="mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-blue-500"></i>
+                    <h2 class="text-base font-black text-slate-800">操作指南</h2>
+                </div>
+                <ol class="space-y-2 text-sm leading-6 text-slate-600">
+                    <li><span class="font-black text-slate-800">1.</span> 在目标网页登录方式中，选择“使用 Google 账号继续”。</li>
+                    <li><span class="font-black text-slate-800">2.</span> 使用上方提供的账号与密码完成登录。</li>
+                    <li><span class="font-black text-slate-800">3.</span> 当要求两步验证时，选择“从 Google 身份验证器应用获取验证码”。</li>
+                    <li><span class="font-black text-slate-800">4.</span> 返回本页，点击下方按钮生成验证码。</li>
+                </ol>
+            </section>
+
+            <section class="mb-5">
+                <div class="mb-3 flex items-center justify-between">
+                    <h2 class="text-base font-black text-slate-800">图示指引</h2>
+                    <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500">3 步</span>
+                </div>
+                <div class="grid gap-3">
+                    <figure class="rounded-2xl border border-slate-200 bg-white p-3">
+                        <figcaption class="mb-2 text-xs font-black text-slate-500">选择 Google 登录</figcaption>
+                        <img class="guide-shot" src="/preview-assets/guide-google-continue.png" alt="使用 Google 账号继续按钮示意图">
+                    </figure>
+                    <figure class="rounded-2xl border border-slate-200 bg-white p-3">
+                        <figcaption class="mb-2 text-xs font-black text-slate-500">选择身份验证器验证码</figcaption>
+                        <img class="guide-shot" src="/preview-assets/guide-authenticator-option.png" alt="从 Google 身份验证器应用获取验证码示意图">
+                    </figure>
+                    <figure class="rounded-2xl border border-slate-200 bg-white p-3">
+                        <figcaption class="mb-2 text-xs font-black text-slate-500">粘贴验证码并下一步</figcaption>
+                        <img class="guide-shot" src="/preview-assets/guide-code-input.png" alt="验证码输入框示意图">
+                    </figure>
+                </div>
+            </section>
+
+            <div class="mb-5 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm leading-6 text-red-600">
+                <div class="mb-1 flex items-center gap-2 font-black">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    注意
+                </div>
+                <p>验证码生成后仅 30 秒内有效。请准备就绪后再点击下方按钮，并在倒计时结束前快速复制 6 位数字到输入框，立马点击下一步。</p>
+            </div>
+
+            <button id="use-token-btn" type="button" class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 font-black text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-700 active:scale-[0.98]">
+                <span>准备就绪，确认使用 Token</span>
+                <i class="fa-solid fa-lock-open text-sm"></i>
+            </button>
+
+            <button id="guide-back-btn" type="button" class="mx-auto mt-4 flex items-center justify-center gap-1.5 text-sm font-bold text-slate-500 transition hover:text-blue-600">
+                <i class="fa-solid fa-arrow-left"></i>
+                返回重新输入 Token
+            </button>
+        </div>
+
+        <div id="step-result" class="hidden w-full">
+            
+            <div id="waiting-zone" class="hidden text-center py-6 animate-fade-in">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-orange-100 text-orange-500 mb-3">
+                    <i class="fa-solid fa-hourglass-half text-xl animate-pulse"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-700 mb-1">拦截保护机制已触发</h3>
+                <p class="text-sm text-slate-500 mb-6">验证码已生成，请在倒计时结束前完成输入；失效后将自动刷新一次验证码。</p>
+                
+                <div id="countdown-text" class="text-2xl font-black text-blue-600 transition-all duration-300">
+                    正在生成验证码…
+                </div>
+            </div>
+
+            <div id="code-zone" class="hidden text-center animate-fade-in">
+                <div id="status-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-600 text-xs font-semibold mb-2 border border-green-100">
+                    <i class="fa-solid fa-circle-check"></i> 授权成功 · 状态满血
+                </div>
+                
+                <div class="flex items-stretch bg-white border border-slate-200 rounded-2xl my-4 shadow-sm overflow-hidden h-28">
+                    <div class="code-box flex-1 flex items-center justify-center border-r border-slate-100 overflow-hidden">
+                        <div id="2fa-code" class="code-display">000 000</div>
+                    </div>
+                    <button id="copy-btn-area" class="w-28 bg-slate-50 hover:bg-blue-50 active:bg-blue-100 transition-colors flex flex-col items-center justify-center text-slate-400 hover:text-blue-600 group cursor-pointer outline-none">
+                        <i id="copy-icon" class="fa-regular fa-copy text-3xl mb-2 group-hover:scale-110 transition-transform"></i>
+                        <span id="copy-text" class="text-sm font-bold tracking-wide">点击复制</span>
+                    </button>
+                </div>
+                
+                <div class="flex justify-between items-center text-xs font-semibold text-slate-500 mb-1.5 px-1">
+                    <span>剩余有效时间</span>
+                    <span id="time-left" class="tabular-nums font-mono text-blue-600">30s</span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-1.5 mb-6 overflow-hidden">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+            </div>
+
+            <button id="back-btn" class="text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors flex items-center justify-center gap-1.5 mx-auto mt-2">
+                <i class="fa-solid fa-rotate-left"></i> 输入其他授权码
+            </button>
+        </div>
+        
+        <div class="mt-8 text-center">
+            <p class="text-[10px] text-slate-400 font-medium tracking-wide"><i class="fa-solid fa-lock text-slate-300 mr-1"></i>基于 TOTP 算法 · 一次性拦截授权</p>
+        </div>
+
+    </div>
+
+    <div id="confirm-overlay" class="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+        <div class="w-full max-w-sm rounded-2xl border border-white/70 bg-white p-6 shadow-2xl shadow-slate-900/20">
+            <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-500">
+                <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+            </div>
+            <h2 id="confirm-title" class="mb-2 text-center text-xl font-black text-slate-800">确认使用一次性 Token</h2>
+            <p id="confirm-message" class="mb-5 text-center text-sm leading-6 text-slate-500">确认后将使用该 token 生成 6 位验证码，生成后的验证码仅短时间有效。</p>
+            <div class="grid grid-cols-2 gap-3">
+                <button id="confirm-cancel-btn" type="button" class="h-11 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200">取消</button>
+                <button id="confirm-ok-btn" type="button" class="h-11 rounded-xl bg-blue-600 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-blue-200">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const btn = document.getElementById('submit-btn');
+        const backBtn = document.getElementById('back-btn');
+        const guideBackBtn = document.getElementById('guide-back-btn');
+        const useTokenBtn = document.getElementById('use-token-btn');
+        const stepInput = document.getElementById('step-input');
+        const stepGuide = document.getElementById('step-guide');
+        const stepResult = document.getElementById('step-result');
+        const accountText = document.getElementById('account-text');
+        const passwordText = document.getElementById('password-text');
+        
+        const waitingZone = document.getElementById('waiting-zone');
+        const codeZone = document.getElementById('code-zone');
+        const countdownText = document.getElementById('countdown-text');
+        
+        const codeDisplay = document.getElementById('2fa-code');
+        const progressBar = document.getElementById('progress-bar');
+        const timeLeftText = document.getElementById('time-left');
+        const statusBadge = document.getElementById('status-badge');
+        
+        const copyBtnArea = document.getElementById('copy-btn-area');
+        const copyIcon = document.getElementById('copy-icon');
+        const copyText = document.getElementById('copy-text');
+        const confirmOverlay = document.getElementById('confirm-overlay');
+        const confirmOkBtn = document.getElementById('confirm-ok-btn');
+        const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+
+        let masterInterval = null;
+        let activeSessionId = 0;
+        let pendingConfirmResolve = null;
+        let checkedToken = "";
+        let checkedAccount = "";
+        let checkedPassword = "";
+
+        // 提交授权码
+        btn.addEventListener('click', async () => {
+            if (pendingConfirmResolve) {
+                return;
+            }
+
+            const tokenInput = document.getElementById('token');
+            const token = tokenInput.value.trim();
+            
+            if (!token) {
+                tokenInput.focus();
+                return;
+            }
+
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> 正在安全验证...';
+            btn.disabled = true;
+
+            try {
+                const result = await checkToken(token);
+                checkedToken = token;
+                checkedAccount = result.accountId || "";
+                checkedPassword = result.accountPassword || "";
+                renderGuide();
+                stepInput.style.display = 'none';
+                stepGuide.style.display = 'block';
+            } catch (error) {
+                alert(error.message || "验证失败：授权码不存在或已失效。");
+            } finally {
+                btn.innerHTML = '<span>验证授权码</span><i class="fa-solid fa-arrow-right text-sm"></i>';
+                btn.disabled = false;
+            }
+        });
+
+        useTokenBtn.addEventListener('click', async () => {
+            if (!checkedToken || pendingConfirmResolve) {
+                return;
+            }
+
+            const confirmed = await confirmOneTimeToken();
+
+            if (!confirmed) {
+                return;
+            }
+
+            stepGuide.style.display = 'none';
+            stepResult.style.display = 'block';
+
+            activeSessionId++;
+            startCodeSession(checkedToken, activeSessionId);
+        });
+
+        confirmOkBtn.addEventListener('click', () => {
+            closeConfirmDialog(true);
+        });
+
+        confirmCancelBtn.addEventListener('click', () => {
+            closeConfirmDialog(false);
+        });
+
+        confirmOverlay.addEventListener('click', (event) => {
+            if (event.target === confirmOverlay) {
+                closeConfirmDialog(false);
+            }
+        });
+
+        document.querySelectorAll('[data-copy-target]').forEach((button) => {
+            button.addEventListener('click', async () => {
+                const target = button.dataset.copyTarget;
+                const value = target === 'account' ? checkedAccount : checkedPassword;
+
+                if (!value) {
+                    return;
+                }
+
+                await copyTextToClipboard(value);
+                button.innerHTML = '<i class="fa-solid fa-check"></i>';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="fa-regular fa-copy"></i>';
+                }, 1200);
+            });
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (!confirmOverlay.classList.contains('is-open')) {
+                return;
+            }
+
+            if (event.key === 'Escape') {
+                closeConfirmDialog(false);
+            }
+        });
+
+        // 返回重新输入
+        backBtn.addEventListener('click', () => {
+            resetToInput();
+        });
+
+        guideBackBtn.addEventListener('click', () => {
+            resetToInput();
+        });
+
+        function resetToInput() {
+            activeSessionId++;
+            if(masterInterval) clearInterval(masterInterval);
+            document.getElementById('token').value = '';
+            checkedToken = "";
+            checkedAccount = "";
+            checkedPassword = "";
+            stepGuide.style.display = 'none';
+            stepResult.style.display = 'none';
+            waitingZone.style.display = 'none';
+            codeZone.style.display = 'none';
+            stepInput.style.display = 'block';
+            document.getElementById('token').focus();
+        }
+
+        function confirmOneTimeToken() {
+            confirmOverlay.classList.add('is-open');
+            confirmOkBtn.focus();
+
+            return new Promise((resolve) => {
+                pendingConfirmResolve = resolve;
+            });
+        }
+
+        function closeConfirmDialog(confirmed) {
+            if (!pendingConfirmResolve) {
+                return;
+            }
+
+            const resolve = pendingConfirmResolve;
+            pendingConfirmResolve = null;
+            confirmOverlay.classList.remove('is-open');
+            btn.focus();
+            resolve(confirmed);
+        }
+
+        function renderGuide() {
+            accountText.innerText = checkedAccount || "未配置账号";
+            passwordText.innerText = checkedPassword || "未配置，请联系微信号：sout-0";
+        }
+
+        // 每次展示口令前，重置 UI 状态
+        function resetCodeUI() {
+            codeDisplay.style.color = "#0f172a";
+            codeDisplay.style.background = "none";
+            codeDisplay.style.webkitBackgroundClip = "initial"; 
+            codeDisplay.style.webkitTextFillColor = "initial";
+            
+            copyBtnArea.onclick = copyCode;
+            copyBtnArea.className = "w-28 bg-slate-50 hover:bg-blue-50 active:bg-blue-100 transition-colors flex flex-col items-center justify-center text-slate-400 hover:text-blue-600 group cursor-pointer outline-none";
+            copyIcon.className = "fa-regular fa-copy text-3xl mb-2 group-hover:scale-110 transition-transform";
+            copyText.innerText = "点击复制";
+
+            statusBadge.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-600 text-xs font-semibold mb-2 border border-green-100";
+            statusBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> 授权成功，请点击复制后快速返回GPT网页';
+        }
+
+        // 30秒耗尽后的锁定逻辑
+        function lockExpiredCode() {
+            codeDisplay.innerText = "--- ---";
+            codeDisplay.style.color = "#94a3b8"; 
+            codeDisplay.style.background = "none";
+            codeDisplay.style.webkitBackgroundClip = "initial"; 
+            codeDisplay.style.webkitTextFillColor = "initial";
+            
+            copyBtnArea.onclick = null; 
+            copyBtnArea.className = "w-28 bg-slate-100 flex flex-col items-center justify-center text-slate-400 group cursor-not-allowed outline-none";
+            copyIcon.className = "fa-solid fa-ban text-3xl mb-2";
+            copyText.innerText = "已过期";
+
+            statusBadge.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 text-red-600 text-xs font-semibold mb-2 border border-red-100";
+            statusBadge.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> 口令已失效';
+            
+            timeLeftText.innerText = '0s';
+            timeLeftText.style.color = '#ef4444';
+            progressBar.style.width = '0%';
+        }
+
+        async function requestTokenCode(tokenCode) {
+            const { response, result } = await postTokenVerify({ tokenCode });
+
+            if (!response.ok || !result.ok) {
+                throw new Error(result.message || "验证失败：授权码不存在或已失效。");
+            }
+
+            return result;
+        }
+
+        async function checkToken(tokenCode) {
+            const { response, result } = await postTokenVerify({ tokenCode, mode: "check" });
+
+            if (!response.ok || !result.ok) {
+                throw new Error(result.message || "验证失败：授权码不存在或已失效。");
+            }
+
+            return result;
+        }
+
+        async function postTokenVerify(payload) {
+            let response;
+
+            try {
+                response = await fetch('/api/token/verify', {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+            } catch {
+                throw new Error("无法连接验证服务，请刷新页面后重试。");
+            }
+
+            const result = await response.json().catch(() => ({}));
+            return { response, result };
+        }
+
+        function getRemainingSeconds(expiresAt, now = Date.now()) {
+            return Math.max(0, Math.ceil((Number(expiresAt) - Number(now)) / 1000));
+        }
+
+        function shouldRefreshCode(refreshCount) {
+            return refreshCount === 0;
+        }
+
+        async function startCodeSession(token, sessionId) {
+            try {
+                const result = await requestTokenCode(token);
+
+                if (sessionId !== activeSessionId) {
+                    return;
+                }
+
+                showCodeAndStartTimer(result.code, result.expiresAt, token, sessionId, 0);
+            } catch (error) {
+                if (sessionId !== activeSessionId) {
+                    return;
+                }
+
+                alert(error.message || "生成验证码失败，请重新输入授权码。");
+                resetToInput();
+            }
+        }
+
+        async function refreshCodeAtExpiry(token, sessionId, refreshCount) {
+            try {
+                const result = await requestTokenCode(token);
+
+                if (sessionId !== activeSessionId) {
+                    return;
+                }
+
+                showCodeAndStartTimer(result.code, result.expiresAt, token, sessionId, refreshCount);
+            } catch (error) {
+                if (sessionId !== activeSessionId) {
+                    return;
+                }
+
+                alert(error.message || "生成新验证码失败，请重新输入授权码。");
+                resetToInput();
+            }
+        }
+
+        // 立即展示当前口令，失效后仅自动刷新一次
+        function showCodeAndStartTimer(code, expiresAt, token, sessionId, refreshCount) {
+            if (sessionId !== activeSessionId) {
+                return;
+            }
+
+            waitingZone.style.display = 'none';
+            codeZone.style.display = 'block';
+            
+            resetCodeUI();
+            
+            const normalizedCode = String(code || "").replace(/\D/g, "").padStart(6, "0").slice(-6);
+            codeDisplay.innerText = normalizedCode.slice(0, 3) + " " + normalizedCode.slice(3, 6);
+            
+            const expiry = Number(expiresAt) || (Date.now() + 30_000);
+
+            const tick = () => {
+                if (sessionId !== activeSessionId) {
+                    clearInterval(masterInterval);
+                    return;
+                }
+
+                const timeLeft = getRemainingSeconds(expiry);
+                updateProgress(Math.min(30, timeLeft));
+
+                if (timeLeft > 0) {
+                    return;
+                }
+
+                clearInterval(masterInterval);
+                masterInterval = null;
+
+                if (shouldRefreshCode(refreshCount)) {
+                    refreshCodeAtExpiry(token, sessionId, refreshCount + 1);
+                } else {
+                    lockExpiredCode();
+                }
+            };
+
+            if(masterInterval) clearInterval(masterInterval);
+            tick();
+            if (getRemainingSeconds(expiry) > 0) {
+                masterInterval = setInterval(tick, 250);
+            }
+        }
+
+        // 进度条与倒计时文字更新
+        function updateProgress(timeLeft) {
+            timeLeftText.innerText = timeLeft + 's';
+            const percentage = (timeLeft / 30) * 100;
+            progressBar.style.width = percentage + '%';
+            progressBar.style.backgroundColor = timeLeft <= 5 ? '#ef4444' : '#3b82f6';
+            timeLeftText.style.color = timeLeft <= 5 ? '#ef4444' : '#2563eb';
+        }
+
+        // 复制口令逻辑
+        function copyCode() {
+            const code = codeDisplay.innerText.replace(" ", "");
+            copyTextToClipboard(code).then(() => {
+                copyBtnArea.className = "w-28 bg-green-500 flex flex-col items-center justify-center text-white transition-colors group cursor-pointer outline-none";
+                copyIcon.className = "fa-solid fa-check text-4xl mb-2";
+                copyText.innerText = "复制成功";
+
+                setTimeout(() => { 
+                    copyBtnArea.className = "w-28 bg-slate-50 hover:bg-blue-50 active:bg-blue-100 transition-colors flex flex-col items-center justify-center text-slate-400 hover:text-blue-600 group cursor-pointer outline-none";
+                    copyIcon.className = "fa-regular fa-copy text-3xl mb-2 group-hover:scale-110 transition-transform";
+                    copyText.innerText = "点击复制";
+                }, 1500);
+            });
+        }
+
+        async function copyTextToClipboard(value) {
+            try {
+                await navigator.clipboard.writeText(value);
+            } catch {
+                const textarea = document.createElement('textarea');
+                textarea.value = value;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                textarea.remove();
+            }
+        }
+    </script>
+</body>
+</html>
+
+
+

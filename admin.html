@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2FA Token 管理登录</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --ink: #152033;
+      --muted: #64748b;
+      --panel: rgba(255, 255, 255, 0.84);
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(241, 245, 249, 0.94) 0%, rgba(226, 232, 240, 0.9) 48%, rgba(219, 234, 254, 0.78) 100%),
+        radial-gradient(circle at top left, rgba(8, 145, 178, 0.12), transparent 38%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    .shell {
+      min-height: 100vh;
+      width: min(100vw - 32px, 460px);
+      margin: 0 auto;
+      display: grid;
+      place-items: center;
+      padding: 32px 0;
+    }
+
+    .glass {
+      width: 100%;
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.76);
+      border-radius: 24px;
+      box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(15, 23, 42, 0.03);
+      backdrop-filter: blur(20px);
+    }
+
+    .focus-ring:focus {
+      outline: none;
+      border-color: rgba(37, 99, 235, 0.72);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.62;
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="glass p-6 sm:p-7">
+      <div class="mb-7">
+        <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/60 px-3 py-1 text-xs font-semibold text-slate-500 shadow-sm">
+          <i class="fa-solid fa-shield-halved text-blue-600"></i>
+          Token Console
+        </div>
+        <h1 class="text-3xl font-black tracking-tight text-slate-900">管理端登录</h1>
+        <p class="mt-2 text-sm leading-6 text-slate-500">登录后进入 Token 管理台。</p>
+      </div>
+
+      <form id="loginForm" class="space-y-4">
+        <label class="block">
+          <span class="mb-2 block text-sm font-bold text-slate-700">管理员密码</span>
+          <div class="relative">
+            <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input id="adminPassword" type="password" autocomplete="current-password" class="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white/76 pl-11 pr-4 text-slate-800" placeholder="输入管理员密码">
+          </div>
+        </label>
+
+        <button id="loginBtn" type="submit" class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99] focus-ring">
+          <i class="fa-solid fa-right-to-bracket"></i>
+          登录管理台
+        </button>
+      </form>
+
+      <div id="message" class="mt-4 hidden rounded-xl border p-4 text-sm"></div>
+    </section>
+  </main>
+
+  <script>
+    const els = {
+      form: document.querySelector("#loginForm"),
+      password: document.querySelector("#adminPassword"),
+      button: document.querySelector("#loginBtn"),
+      message: document.querySelector("#message")
+    };
+
+    els.form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await login();
+    });
+
+    async function login() {
+      const adminPassword = els.password.value;
+
+      if (!adminPassword.trim()) {
+        showMessage("error", "请输入管理员密码。");
+        els.password.focus();
+        return;
+      }
+
+      setBusy(true);
+
+      try {
+        const result = await requestJson(`/api/admin/tokens?adminPassword=${encodeURIComponent(adminPassword)}`);
+
+        if (!result.ok) {
+          showMessage("error", result.message || "登录失败。");
+          return;
+        }
+
+        sessionStorage.setItem("adminPassword", adminPassword);
+        sessionStorage.setItem("adminLoginAt", new Date().toISOString());
+        showMessage("ok", "登录成功，正在进入管理台。");
+        window.location.href = "/admin-console.html";
+      } catch (err) {
+        showMessage("error", err.message || "登录请求失败。");
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function requestJson(url, options) {
+      const response = await fetch(url, options);
+      const text = await response.text();
+      let data = {};
+
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error("服务器返回了无法解析的响应。");
+      }
+
+      return data;
+    }
+
+    function showMessage(type, content) {
+      const styles = type === "ok"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+        : "border-red-200 bg-red-50 text-red-800";
+
+      els.message.className = `mt-4 rounded-xl border p-4 text-sm ${styles}`;
+      els.message.textContent = content;
+      els.message.classList.remove("hidden");
+    }
+
+    function setBusy(isBusy) {
+      els.button.disabled = isBusy;
+      els.button.innerHTML = isBusy
+        ? '<i class="fa-solid fa-circle-notch animate-spin"></i> 登录中'
+        : '<i class="fa-solid fa-right-to-bracket"></i> 登录管理台';
+    }
+  </script>
+</body>
+</html>

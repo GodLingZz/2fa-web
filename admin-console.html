@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2FA Token 管理台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --ink: #152033;
+      --muted: #64748b;
+      --line: rgba(148, 163, 184, 0.34);
+      --panel: rgba(255, 255, 255, 0.82);
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+      --cyan: #0891b2;
+      --danger: #dc2626;
+      --ok: #059669;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(241, 245, 249, 0.92) 0%, rgba(226, 232, 240, 0.86) 46%, rgba(219, 234, 254, 0.7) 100%),
+        radial-gradient(circle at top left, rgba(8, 145, 178, 0.12), transparent 38%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    .shell {
+      display: flex;
+      width: min(1440px, calc(100vw - 40px));
+      height: 100vh;
+      margin: 0 auto;
+      flex-direction: column;
+      gap: 20px;
+      padding: 24px 0;
+    }
+
+    .console-header {
+      flex: 0 0 auto;
+      gap: 16px;
+    }
+
+    .console-actions {
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .console-layout {
+      display: grid;
+      min-height: 0;
+      flex: 1 1 auto;
+      grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
+      gap: 20px;
+    }
+
+    .glass {
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.74);
+      box-shadow: 0 24px 70px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(15, 23, 42, 0.03);
+      backdrop-filter: blur(20px);
+    }
+
+    .focus-ring:focus {
+      outline: none;
+      border-color: rgba(37, 99, 235, 0.72);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+    }
+
+    .data-table {
+      min-width: 720px;
+    }
+
+    .entry-panel,
+    .token-list-panel {
+      display: flex;
+      min-height: 0;
+      flex-direction: column;
+    }
+
+    .entry-panel {
+      overflow-y: auto;
+    }
+
+    .token-table-scroll {
+      min-height: 0;
+      flex: 1;
+      overflow: auto;
+    }
+
+    .data-table thead {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .import-strip {
+      background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.12), rgba(8, 145, 178, 0.08)),
+        repeating-linear-gradient(135deg, rgba(15, 23, 42, 0.05) 0 1px, transparent 1px 11px);
+    }
+
+    .workspace-title {
+      letter-spacing: 0;
+    }
+
+    .shell h1 {
+      letter-spacing: 0;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.62;
+    }
+
+    @media (max-width: 980px) {
+      body {
+        overflow: auto;
+      }
+
+      .shell {
+        width: min(100vw - 24px, 620px);
+        height: auto;
+        min-height: 100vh;
+        padding: 18px 0;
+      }
+
+      .console-layout {
+        display: flex;
+        min-height: auto;
+        flex-direction: column;
+      }
+
+      .entry-panel {
+        overflow: visible;
+      }
+
+      .token-list-panel {
+        min-height: 520px;
+        max-height: 72vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="console-header flex flex-col sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <div class="mb-3 inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/60 px-3 py-1 text-xs font-semibold text-slate-500 shadow-sm">
+          <i class="fa-solid fa-shield-halved text-blue-600"></i>
+          Token Console
+        </div>
+        <h1 class="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">2FA Token 管理台</h1>
+      </div>
+      <div class="console-actions flex flex-col gap-2 sm:flex-row">
+        <div id="loginStatus" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 text-sm font-bold text-emerald-700 shadow-sm">
+          <i class="fa-solid fa-user-shield"></i>
+          已登录
+        </div>
+        <button id="exportBtn" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-white/80 px-4 text-sm font-bold text-emerald-700 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 focus-ring">
+          <i class="fa-solid fa-file-excel"></i>
+          导出未使用
+        </button>
+        <button id="refreshBtn" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-4 text-sm font-bold text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-700 focus-ring">
+          <i class="fa-solid fa-rotate-right"></i>
+          刷新列表
+        </button>
+        <button id="logoutBtn" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-4 text-sm font-bold text-slate-700 shadow-sm transition hover:border-red-200 hover:text-red-700 focus-ring">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          退出
+        </button>
+      </div>
+    </header>
+
+    <section class="console-layout">
+      <div class="glass entry-panel rounded-2xl p-5">
+        <div class="import-strip mb-5 rounded-xl border border-white/70 p-4">
+          <div class="flex items-center gap-3">
+            <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+              <i class="fa-solid fa-file-csv text-xl"></i>
+            </div>
+            <div>
+              <h2 class="text-lg font-black text-slate-900">CSV 导入</h2>
+              <p class="text-sm text-slate-500">token_code, account_id, account_password, totp_secret, status</p>
+            </div>
+          </div>
+        </div>
+
+        <form id="importForm" class="space-y-4">
+          <input id="adminPassword" type="hidden">
+
+          <label class="block">
+            <span class="mb-2 block text-sm font-bold text-slate-700">CSV 文件</span>
+            <input id="csvFile" type="file" accept=".csv,text/csv" class="focus-ring block w-full cursor-pointer rounded-xl border border-dashed border-slate-300 bg-white/60 p-3 text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-sm file:font-bold file:text-white hover:border-blue-300">
+          </label>
+
+          <label class="block">
+            <span class="mb-2 block text-sm font-bold text-slate-700">CSV 内容</span>
+            <textarea id="csvText" class="focus-ring mono min-h-[260px] w-full resize-y rounded-xl border border-slate-200 bg-white/72 p-4 text-sm leading-6 text-slate-800" spellcheck="false" placeholder="token_code,account_id,account_password,totp_secret,status&#10;TK-A7KD-9M2Q-X4ZT-P8CN,user001,DemoPass2026!,JBSWY3DPEHPK3PXP,active&#10;,user002,DemoPass2026!,JBSWY3DPEHPK3PXP,active"></textarea>
+          </label>
+
+          <div class="flex flex-col gap-3 sm:flex-row">
+            <button id="importBtn" type="submit" class="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99] focus-ring">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+              导入 CSV
+            </button>
+            <button id="sampleBtn" type="button" class="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-4 text-sm font-bold text-slate-700 transition hover:border-cyan-200 hover:text-cyan-700 focus-ring">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              填入样例
+            </button>
+          </div>
+        </form>
+
+        <div class="mt-6 border-t border-slate-200/70 pt-6">
+          <div class="import-strip mb-5 rounded-xl border border-white/70 p-4">
+            <div class="flex items-center gap-3">
+              <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-cyan-700 shadow-sm">
+                <i class="fa-solid fa-key text-xl"></i>
+              </div>
+              <div>
+                <h2 class="text-lg font-black text-slate-900">手动生成</h2>
+                <p class="text-sm text-slate-500">账号 + Base32 密钥 + 生成数量</p>
+              </div>
+            </div>
+          </div>
+
+          <form id="generateForm" class="space-y-4">
+            <label class="block">
+              <span class="mb-2 block text-sm font-bold text-slate-700">账号 ID</span>
+              <input id="manualAccountId" type="text" class="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white/70 px-4 text-slate-800" placeholder="user001">
+            </label>
+
+            <label class="block">
+              <span class="mb-2 block text-sm font-bold text-slate-700">账号密码</span>
+              <input id="manualAccountPassword" type="text" autocomplete="off" class="focus-ring mono h-12 w-full rounded-xl border border-slate-200 bg-white/70 px-4 text-sm text-slate-800" placeholder="DemoPass2026!">
+            </label>
+
+            <label class="block">
+              <span class="mb-2 block text-sm font-bold text-slate-700">2FA Base32 密钥</span>
+              <input id="manualTotpSecret" type="text" autocomplete="off" class="focus-ring mono h-12 w-full rounded-xl border border-slate-200 bg-white/70 px-4 text-sm text-slate-800" placeholder="JBSWY3DPEHPK3PXP">
+            </label>
+
+            <div class="grid gap-3 sm:grid-cols-[1fr_1fr]">
+              <label class="block">
+                <span class="mb-2 block text-sm font-bold text-slate-700">生成数量</span>
+                <input id="manualCount" type="number" min="1" max="100" step="1" value="1" class="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white/70 px-4 text-slate-800">
+              </label>
+
+              <label class="block">
+                <span class="mb-2 block text-sm font-bold text-slate-700">状态</span>
+                <select id="manualStatus" class="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white/70 px-4 text-slate-800">
+                  <option value="active">active</option>
+                  <option value="disabled">disabled</option>
+                </select>
+              </label>
+            </div>
+
+            <button id="generateBtn" type="submit" class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-cyan-700 px-5 text-sm font-black text-white shadow-lg shadow-cyan-700/20 transition hover:bg-cyan-800 active:scale-[0.99] focus-ring">
+              <i class="fa-solid fa-plus"></i>
+              生成 Token
+            </button>
+          </form>
+        </div>
+
+        <div id="message" class="mt-4 hidden rounded-xl border p-4 text-sm"></div>
+      </div>
+
+      <div class="glass token-list-panel overflow-hidden rounded-2xl">
+        <div class="flex flex-col gap-3 border-b border-slate-200/70 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 class="text-lg font-black text-slate-900">Token 列表</h2>
+            <p id="tokenCount" class="text-sm text-slate-500">等待读取</p>
+          </div>
+          <div class="grid w-full gap-2 sm:w-auto sm:grid-cols-[minmax(220px,288px)_minmax(170px,220px)_150px]">
+            <div class="relative">
+              <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+              <input id="filterInput" type="search" class="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white/70 pl-11 pr-4 text-sm" placeholder="筛选 token 或账号">
+            </div>
+            <select id="accountFilter" class="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white/70 px-3 text-sm font-semibold text-slate-700">
+              <option value="">全部账号</option>
+            </select>
+            <select id="statusFilter" class="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white/70 px-3 text-sm font-semibold text-slate-700">
+              <option value="">全部状态</option>
+              <option value="unused">未使用</option>
+              <option value="used">已使用</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="importSummary" class="hidden border-b border-slate-200/70 bg-blue-50/60 p-5"></div>
+
+        <div class="token-table-scroll">
+          <table class="data-table w-full border-collapse text-left text-sm">
+            <thead class="bg-slate-50/80 text-xs uppercase text-slate-500">
+              <tr>
+                <th class="px-5 py-3 font-black">Token</th>
+                <th class="px-5 py-3 font-black">账号</th>
+                <th class="px-5 py-3 font-black">2FA 密钥</th>
+                <th class="px-5 py-3 font-black">状态</th>
+                <th class="px-5 py-3 font-black">创建时间</th>
+                <th class="px-5 py-3 font-black">使用时间</th>
+              </tr>
+            </thead>
+            <tbody id="tokenRows" class="divide-y divide-slate-100 bg-white/35">
+              <tr>
+                <td colspan="6" class="px-5 py-12 text-center text-slate-500">
+                  <i class="fa-regular fa-folder-open mb-3 block text-3xl text-slate-300"></i>
+                  输入管理员密码后刷新列表
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="exportDialog" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm">
+    <div class="w-full max-w-lg rounded-2xl border border-white/70 bg-white p-5 shadow-2xl">
+      <div class="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <div id="exportDialogIcon" class="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+            <i class="fa-solid fa-file-excel text-xl"></i>
+          </div>
+          <h2 id="exportDialogTitle" class="text-xl font-black text-slate-900">导出成功</h2>
+          <p id="exportDialogText" class="mt-1 text-sm leading-6 text-slate-500">Excel 文件已生成。</p>
+        </div>
+        <button id="exportDialogClose" type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-red-200 hover:text-red-600 focus-ring">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div id="exportDialogLinkBox" class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div class="mb-2 text-xs font-black uppercase text-slate-500">下载地址</div>
+        <a id="exportDialogLink" href="#" class="break-all text-sm font-bold text-blue-700 underline" target="_blank" rel="noopener"></a>
+      </div>
+
+      <div class="mt-5 flex flex-col gap-2 sm:flex-row">
+        <a id="exportDialogOpen" href="#" target="_blank" rel="noopener" class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-black text-white transition hover:bg-blue-700 focus-ring">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          打开下载地址
+        </a>
+        <button id="exportDialogCopy" type="button" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-blue-200 hover:text-blue-700 focus-ring">
+          <i class="fa-regular fa-copy"></i>
+          复制地址
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const els = {
+      form: document.querySelector("#importForm"),
+      generateForm: document.querySelector("#generateForm"),
+      adminPassword: document.querySelector("#adminPassword"),
+      csvFile: document.querySelector("#csvFile"),
+      csvText: document.querySelector("#csvText"),
+      manualAccountId: document.querySelector("#manualAccountId"),
+      manualAccountPassword: document.querySelector("#manualAccountPassword"),
+      manualTotpSecret: document.querySelector("#manualTotpSecret"),
+      manualCount: document.querySelector("#manualCount"),
+      manualStatus: document.querySelector("#manualStatus"),
+      importBtn: document.querySelector("#importBtn"),
+      generateBtn: document.querySelector("#generateBtn"),
+      sampleBtn: document.querySelector("#sampleBtn"),
+      refreshBtn: document.querySelector("#refreshBtn"),
+      exportBtn: document.querySelector("#exportBtn"),
+      logoutBtn: document.querySelector("#logoutBtn"),
+      exportDialog: document.querySelector("#exportDialog"),
+      exportDialogIcon: document.querySelector("#exportDialogIcon"),
+      exportDialogTitle: document.querySelector("#exportDialogTitle"),
+      exportDialogText: document.querySelector("#exportDialogText"),
+      exportDialogLinkBox: document.querySelector("#exportDialogLinkBox"),
+      exportDialogLink: document.querySelector("#exportDialogLink"),
+      exportDialogOpen: document.querySelector("#exportDialogOpen"),
+      exportDialogCopy: document.querySelector("#exportDialogCopy"),
+      exportDialogClose: document.querySelector("#exportDialogClose"),
+      message: document.querySelector("#message"),
+      importSummary: document.querySelector("#importSummary"),
+      tokenRows: document.querySelector("#tokenRows"),
+      tokenCount: document.querySelector("#tokenCount"),
+      filterInput: document.querySelector("#filterInput"),
+      accountFilter: document.querySelector("#accountFilter"),
+      statusFilter: document.querySelector("#statusFilter")
+    };
+
+    let tokens = [];
+    let currentExportUrl = "";
+
+    const storedAdminPassword = sessionStorage.getItem("adminPassword") || "";
+
+    if (!storedAdminPassword) {
+      window.location.href = "/admin.html";
+    } else {
+      els.adminPassword.value = storedAdminPassword;
+      loadTokens({ silent: true });
+    }
+
+    const sampleCsv = [
+      "token_code,account_id,account_password,totp_secret,status",
+      "TK-A7KD-9M2Q-X4ZT-P8CN,user001,DemoPass2026!,JBSWY3DPEHPK3PXP,active",
+      ",user002,DemoPass2026!,JBSWY3DPEHPK3PXP,active"
+    ].join("\n");
+
+    els.sampleBtn.addEventListener("click", () => {
+      els.csvText.value = sampleCsv;
+      els.csvText.focus();
+    });
+
+    els.csvFile.addEventListener("change", async () => {
+      const file = els.csvFile.files && els.csvFile.files[0];
+
+      if (!file) {
+        return;
+      }
+
+      els.csvText.value = await file.text();
+      showMessage("ok", `已读取文件：${file.name}`);
+    });
+
+    els.filterInput.addEventListener("input", () => {
+      renderTokens();
+    });
+
+    els.accountFilter.addEventListener("change", () => {
+      renderTokens();
+    });
+
+    els.statusFilter.addEventListener("change", () => {
+      renderTokens();
+    });
+
+    els.refreshBtn.addEventListener("click", () => {
+      loadTokens();
+    });
+
+    els.exportBtn.addEventListener("click", () => {
+      exportUnusedTokens();
+    });
+
+    els.logoutBtn.addEventListener("click", () => {
+      sessionStorage.removeItem("adminPassword");
+      sessionStorage.removeItem("adminLoginAt");
+      window.location.href = "/admin.html";
+    });
+
+    els.exportDialogClose.addEventListener("click", () => {
+      hideExportDialog();
+    });
+
+    els.exportDialog.addEventListener("click", (event) => {
+      if (event.target === els.exportDialog) {
+        hideExportDialog();
+      }
+    });
+
+    els.exportDialogCopy.addEventListener("click", async () => {
+      if (!currentExportUrl) {
+        return;
+      }
+
+      await navigator.clipboard.writeText(currentExportUrl);
+      els.exportDialogCopy.innerHTML = '<i class="fa-solid fa-check"></i> 已复制';
+      setTimeout(() => {
+        els.exportDialogCopy.innerHTML = '<i class="fa-regular fa-copy"></i> 复制地址';
+      }, 1200);
+    });
+
+    els.form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await importCsv();
+    });
+
+    els.generateForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await generateTokens();
+    });
+
+    async function importCsv() {
+      const adminPassword = els.adminPassword.value;
+      const csv = els.csvText.value;
+
+      if (!adminPassword.trim()) {
+        showMessage("error", "请先输入管理员密码。");
+        els.adminPassword.focus();
+        return;
+      }
+
+      if (!csv.trim()) {
+        showMessage("error", "请粘贴 CSV 内容或选择 CSV 文件。");
+        els.csvText.focus();
+        return;
+      }
+
+      setBusy(true);
+      hideImportSummary();
+
+      try {
+        const result = await requestJson("/api/admin/import-csv", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ adminPassword, csv })
+        });
+
+        if (!result.ok) {
+          if (Array.isArray(result.details) && result.details.length > 0) {
+            showValidationErrors(result);
+          } else {
+            showMessage("error", result.message || "导入失败。");
+          }
+          return;
+        }
+
+        showMessage("ok", `导入完成：${result.imported} 条，自动生成 ${result.generated} 个 token。`);
+        showImportSummary(result.tokens || [], "本次导入");
+        await loadTokens({ silent: true });
+      } catch (err) {
+        showMessage("error", err.message || "导入请求失败。");
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function generateTokens() {
+      const adminPassword = els.adminPassword.value;
+      const accountId = els.manualAccountId.value;
+      const accountPassword = els.manualAccountPassword.value;
+      const totpSecret = els.manualTotpSecret.value;
+      const count = Number(els.manualCount.value);
+      const status = els.manualStatus.value;
+
+      if (!adminPassword.trim()) {
+        showMessage("error", "请先输入管理员密码。");
+        els.adminPassword.focus();
+        return;
+      }
+
+      if (!accountId.trim()) {
+        showMessage("error", "请填写账号 ID。");
+        els.manualAccountId.focus();
+        return;
+      }
+
+      if (!accountPassword.trim()) {
+        showMessage("error", "请填写账号密码。");
+        els.manualAccountPassword.focus();
+        return;
+      }
+
+      if (!totpSecret.trim()) {
+        showMessage("error", "请填写 2FA Base32 密钥。");
+        els.manualTotpSecret.focus();
+        return;
+      }
+
+      if (!Number.isInteger(count) || count < 1 || count > 100) {
+        showMessage("error", "生成数量必须是 1-100 的整数。");
+        els.manualCount.focus();
+        return;
+      }
+
+      setGenerateBusy(true);
+      hideImportSummary();
+
+      try {
+        const result = await requestJson("/api/admin/generate-tokens", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ adminPassword, accountId, accountPassword, totpSecret, count, status })
+        });
+
+        if (!result.ok) {
+          if (Array.isArray(result.details) && result.details.length > 0) {
+            showFieldErrors(result);
+          } else {
+            showMessage("error", result.message || "生成失败。");
+          }
+          return;
+        }
+
+        showMessage("ok", `生成完成：${result.generated} 个 token。`);
+        showImportSummary(result.tokens || [], "本次生成");
+        await loadTokens({ silent: true });
+      } catch (err) {
+        showMessage("error", err.message || "生成请求失败。");
+      } finally {
+        setGenerateBusy(false);
+      }
+    }
+
+    async function exportUnusedTokens() {
+      const adminPassword = els.adminPassword.value;
+
+      if (!adminPassword.trim()) {
+        showMessage("error", "请先输入管理员密码。");
+        els.adminPassword.focus();
+        return;
+      }
+
+      setExportBusy(true);
+
+      try {
+        const downloadUrl = `/api/admin/export-unused-tokens?adminPassword=${encodeURIComponent(adminPassword)}`;
+        const response = await fetch(downloadUrl);
+
+        if (!response.ok) {
+          const result = await response.json().catch(() => ({}));
+          showExportDialog({
+            ok: false,
+            title: "导出失败",
+            text: result.message || "导出请求失败，请检查管理员登录状态后重试。"
+          });
+          return;
+        }
+
+        const filename = readFilename(response.headers.get("content-disposition")) || "unused-tokens.xlsx";
+        const absoluteUrl = new URL(downloadUrl, window.location.origin).href;
+        showExportDialog({
+          ok: true,
+          title: "导出成功",
+          text: `Excel 文件已生成：${filename}`,
+          url: absoluteUrl
+        });
+        showMessage("ok", "Excel 文件已生成，请在弹窗中打开下载地址。");
+      } catch (err) {
+        showExportDialog({
+          ok: false,
+          title: "导出失败",
+          text: err.message || "导出请求失败。"
+        });
+      } finally {
+        setExportBusy(false);
+      }
+    }
+
+    async function loadTokens(options = {}) {
+      const adminPassword = els.adminPassword.value;
+
+      if (!adminPassword.trim()) {
+        if (!options.silent) {
+          showMessage("error", "请先输入管理员密码。");
+          els.adminPassword.focus();
+        }
+        return;
+      }
+
+      els.refreshBtn.disabled = true;
+
+      try {
+        const url = `/api/admin/tokens?adminPassword=${encodeURIComponent(adminPassword)}`;
+        const result = await requestJson(url);
+
+        if (!result.ok) {
+          if (!options.silent) {
+            showMessage("error", result.message || "读取 token 列表失败。");
+          }
+          return;
+        }
+
+        tokens = Array.isArray(result.tokens) ? result.tokens : [];
+        updateAccountFilterOptions();
+        renderTokens();
+
+        if (!options.silent) {
+          showMessage("ok", "列表已刷新。");
+        }
+      } catch (err) {
+        if (!options.silent) {
+          showMessage("error", err.message || "读取 token 列表失败。");
+        }
+      } finally {
+        els.refreshBtn.disabled = false;
+      }
+    }
+
+    async function requestJson(url, options) {
+      const response = await fetch(url, options);
+      const text = await response.text();
+      let data = {};
+
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error("服务器返回了无法解析的响应。");
+      }
+
+      return data;
+    }
+
+    function updateAccountFilterOptions() {
+      const selectedAccount = els.accountFilter.value;
+      const accounts = [...new Set(tokens.map((token) => token.accountId).filter(Boolean))]
+        .sort((left, right) => left.localeCompare(right));
+
+      els.accountFilter.innerHTML = [
+        '<option value="">全部账号</option>',
+        ...accounts.map((accountId) => `<option value="${escapeAttribute(accountId)}">${escapeHtml(accountId)}</option>`)
+      ].join("");
+
+      if (accounts.includes(selectedAccount)) {
+        els.accountFilter.value = selectedAccount;
+      }
+    }
+
+    function renderTokens() {
+      const query = els.filterInput.value.trim().toLowerCase();
+      const selectedAccount = els.accountFilter.value;
+      const selectedStatus = els.statusFilter.value;
+      const visible = tokens.filter((token) => {
+        const matchesQuery = !query ||
+          token.tokenCode.toLowerCase().includes(query) ||
+          token.accountId.toLowerCase().includes(query) ||
+          token.status.toLowerCase().includes(query);
+        const matchesAccount = !selectedAccount || token.accountId === selectedAccount;
+        const matchesStatus = !selectedStatus ||
+          (selectedStatus === "unused" && token.status === "active") ||
+          (selectedStatus === "used" && token.status === "used");
+
+        return matchesQuery && matchesAccount && matchesStatus;
+      });
+
+      els.tokenCount.textContent = `${visible.length} / ${tokens.length} 条记录`;
+
+      if (tokens.length === 0) {
+        els.tokenRows.innerHTML = emptyRow("暂无 token 记录");
+        return;
+      }
+
+      if (visible.length === 0) {
+        els.tokenRows.innerHTML = emptyRow("没有匹配的 token");
+        return;
+      }
+
+      els.tokenRows.innerHTML = visible.map((token) => {
+        const isActive = token.status === "active";
+        const isUsed = token.status === "used";
+        const usageTime = isUsed ? token.updatedAt || "" : "-";
+        const statusClass = isActive
+          ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+          : isUsed
+            ? "bg-amber-50 text-amber-700 border-amber-100"
+            : "bg-slate-100 text-slate-600 border-slate-200";
+        const statusIcon = isActive ? "fa-circle-check" : isUsed ? "fa-circle-xmark" : "fa-circle-pause";
+        const statusText = isActive ? "active" : isUsed ? "used" : "disabled";
+        const maskedSecret = maskSecret(token.totpSecret || "");
+
+        return `
+          <tr class="transition hover:bg-blue-50/40">
+            <td class="px-5 py-4">
+              <button type="button" class="mono rounded-lg border border-slate-200 bg-white/72 px-2.5 py-1 text-xs font-bold text-slate-800 transition hover:border-blue-300 hover:text-blue-700" data-copy="${escapeAttribute(token.tokenCode)}" title="点击复制 Token" aria-label="复制 Token ${escapeAttribute(token.tokenCode)}">
+                ${escapeHtml(token.tokenCode)}
+              </button>
+            </td>
+            <td class="px-5 py-4 font-semibold text-slate-700">${escapeHtml(token.accountId)}</td>
+            <td class="px-5 py-4">
+              <div class="flex min-w-[240px] items-center gap-2">
+                <code class="mono rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-black text-slate-700" data-secret-text="${escapeAttribute(token.totpSecret || "")}" data-secret-mask="${escapeAttribute(maskedSecret)}">${escapeHtml(maskedSecret)}</code>
+                <button type="button" class="rounded-lg border border-slate-200 bg-white/72 px-2.5 py-1 text-xs font-bold text-slate-600 transition hover:border-blue-300 hover:text-blue-700" data-toggle-secret>
+                  查看
+                </button>
+                <button type="button" class="rounded-lg border border-slate-200 bg-white/72 px-2.5 py-1 text-xs font-bold text-slate-600 transition hover:border-blue-300 hover:text-blue-700" data-copy-secret="${escapeAttribute(token.totpSecret || "")}">
+                  复制
+                </button>
+              </div>
+            </td>
+            <td class="px-5 py-4">
+              <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-black ${statusClass}">
+                <i class="fa-solid ${statusIcon}"></i>
+                ${statusText}
+              </span>
+            </td>
+            <td class="mono px-5 py-4 text-xs text-slate-500">${escapeHtml(token.createdAt || "")}</td>
+            <td class="mono px-5 py-4 text-xs text-slate-500">${escapeHtml(usageTime)}</td>
+          </tr>
+        `;
+      }).join("");
+
+      document.querySelectorAll("[data-copy]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const tokenCode = button.dataset.copy || "";
+          const originalText = tokenCode;
+
+          try {
+            await copyTextToClipboard(tokenCode);
+            button.textContent = "已复制";
+            showMessage("ok", "Token 已复制。");
+            setTimeout(() => {
+              button.textContent = originalText;
+            }, 1200);
+          } catch {
+            showMessage("error", "复制失败，请手动选择 Token。");
+          }
+        });
+      });
+
+      document.querySelectorAll("[data-toggle-secret]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const secretText = button.parentElement?.querySelector("[data-secret-text]");
+
+          if (!secretText) {
+            return;
+          }
+
+          const isVisible = secretText.dataset.visible === "true";
+          secretText.textContent = isVisible ? secretText.dataset.secretMask || "" : secretText.dataset.secretText || "";
+          secretText.dataset.visible = isVisible ? "false" : "true";
+          button.textContent = isVisible ? "查看" : "隐藏";
+        });
+      });
+
+      document.querySelectorAll("[data-copy-secret]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const secret = button.dataset.copySecret || "";
+          const originalText = button.textContent;
+
+          try {
+            await copyTextToClipboard(secret);
+            button.textContent = "已复制";
+            showMessage("ok", "2FA 密钥已复制。");
+            setTimeout(() => {
+              button.textContent = originalText;
+            }, 1200);
+          } catch {
+            showMessage("error", "复制失败，请先点击查看后手动选择密钥。");
+          }
+        });
+      });
+    }
+
+    async function copyTextToClipboard(text) {
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(text);
+          return;
+        } catch {
+          // Fall back for browser contexts where Clipboard API is permission-gated.
+        }
+      }
+
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      textarea.style.top = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      try {
+        if (!document.execCommand("copy")) {
+          throw new Error("copy failed");
+        }
+      } finally {
+        textarea.remove();
+      }
+    }
+
+    function emptyRow(text) {
+      return `
+        <tr>
+          <td colspan="6" class="px-5 py-12 text-center text-slate-500">
+            <i class="fa-regular fa-folder-open mb-3 block text-3xl text-slate-300"></i>
+            ${escapeHtml(text)}
+          </td>
+        </tr>
+      `;
+    }
+
+    function maskSecret(secret) {
+      return secret ? "•".repeat(Math.min(secret.length, 32)) : "-";
+    }
+
+    function showImportSummary(importedTokens, title = "本次导入") {
+      if (importedTokens.length === 0) {
+        hideImportSummary();
+        return;
+      }
+
+      els.importSummary.classList.remove("hidden");
+      els.importSummary.innerHTML = `
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <h3 class="text-sm font-black text-slate-800">${escapeHtml(title)}</h3>
+          <span class="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-blue-700">${importedTokens.length} 条</span>
+        </div>
+        <div class="grid gap-2 sm:grid-cols-2">
+          ${importedTokens.map((token) => `
+            <div class="rounded-xl border border-blue-100 bg-white/72 p-3">
+              <div class="mono mb-1 text-xs font-black text-slate-900">${escapeHtml(token.tokenCode)}</div>
+              <div class="flex items-center justify-between gap-2 text-xs text-slate-500">
+                <span>${escapeHtml(token.accountId)}</span>
+                <span>${token.generated === false ? "显式 token" : "自动生成"}</span>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function hideImportSummary() {
+      els.importSummary.classList.add("hidden");
+      els.importSummary.innerHTML = "";
+    }
+
+    function showValidationErrors(result) {
+      const rows = result.details.map((detail) => {
+        return `<li>第 ${escapeHtml(String(detail.row))} 行 · ${escapeHtml(detail.field)}：${escapeHtml(detail.message)}</li>`;
+      }).join("");
+
+      showMessage("error", `${escapeHtml(result.message || "CSV 校验失败")}<ul class="mt-2 list-disc space-y-1 pl-5">${rows}</ul>`, true);
+    }
+
+    function showFieldErrors(result) {
+      const rows = result.details.map((detail) => {
+        return `<li>${escapeHtml(detail.field)}：${escapeHtml(detail.message)}</li>`;
+      }).join("");
+
+      showMessage("error", `${escapeHtml(result.message || "校验失败")}<ul class="mt-2 list-disc space-y-1 pl-5">${rows}</ul>`, true);
+    }
+
+    function showMessage(type, content, html = false) {
+      const styles = type === "ok"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+        : "border-red-200 bg-red-50 text-red-800";
+
+      els.message.className = `mt-4 rounded-xl border p-4 text-sm ${styles}`;
+      els.message.innerHTML = html ? content : escapeHtml(content);
+      els.message.classList.remove("hidden");
+    }
+
+    function showExportDialog({ ok, title, text, url = "" }) {
+      currentExportUrl = url;
+      els.exportDialogTitle.textContent = title;
+      els.exportDialogText.textContent = text;
+      els.exportDialogIcon.className = ok
+        ? "mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700"
+        : "mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-red-700";
+      els.exportDialogIcon.innerHTML = ok
+        ? '<i class="fa-solid fa-file-excel text-xl"></i>'
+        : '<i class="fa-solid fa-triangle-exclamation text-xl"></i>';
+      els.exportDialogLink.textContent = url;
+      els.exportDialogLink.href = url || "#";
+      els.exportDialogOpen.href = url || "#";
+      els.exportDialogLinkBox.classList.toggle("hidden", !url);
+      els.exportDialogOpen.classList.toggle("hidden", !url);
+      els.exportDialogCopy.classList.toggle("hidden", !url);
+      els.exportDialog.classList.remove("hidden");
+      els.exportDialog.classList.add("flex");
+    }
+
+    function hideExportDialog() {
+      els.exportDialog.classList.add("hidden");
+      els.exportDialog.classList.remove("flex");
+    }
+
+    function readFilename(disposition) {
+      const match = String(disposition || "").match(/filename="([^"]+)"/);
+      return match ? match[1] : "";
+    }
+
+    function setBusy(isBusy) {
+      els.importBtn.disabled = isBusy;
+      els.importBtn.innerHTML = isBusy
+        ? '<i class="fa-solid fa-circle-notch animate-spin"></i> 导入中'
+        : '<i class="fa-solid fa-cloud-arrow-up"></i> 导入 CSV';
+    }
+
+    function setGenerateBusy(isBusy) {
+      els.generateBtn.disabled = isBusy;
+      els.generateBtn.innerHTML = isBusy
+        ? '<i class="fa-solid fa-circle-notch animate-spin"></i> 生成中'
+        : '<i class="fa-solid fa-plus"></i> 生成 Token';
+    }
+
+    function setExportBusy(isBusy) {
+      els.exportBtn.disabled = isBusy;
+      els.exportBtn.innerHTML = isBusy
+        ? '<i class="fa-solid fa-circle-notch animate-spin"></i> 导出中'
+        : '<i class="fa-solid fa-file-excel"></i> 导出未使用';
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function escapeAttribute(value) {
+      return escapeHtml(value).replaceAll("`", "&#096;");
+    }
+  </script>
+</body>
+</html>

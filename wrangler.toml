@@ -1,0 +1,9 @@
+name = "2fa-web"
+compatibility_date = "2025-12-01"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "2fa-token-db"
+database_id = "572013e2-38ae-4ecb-9ebf-67de4b43634e"
+preview_database_id = "2fa-token-db-local"

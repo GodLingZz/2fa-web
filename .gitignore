@@ -1,0 +1,10 @@
+.dev.vars
+.node_modules/
+node_modules/
+.codegraph/
+.wrangler/
+*.log
+test-results/
+playwright-report/
+.learnings/
+exports/*.xlsx
