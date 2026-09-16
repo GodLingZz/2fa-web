@@ -235,7 +235,7 @@
 
       <!-- 工作台切换 Tabs -->
       <nav class="flex items-center justify-between gap-2.5 border-t border-slate-200/70 pt-2.5">
-        <div class="grid grid-cols-2 w-full sm:w-auto sm:inline-flex items-center gap-1 sm:gap-1.5 rounded-2xl border border-white/80 bg-white/65 p-1 shadow-sm backdrop-blur-md">
+        <div class="grid grid-cols-3 w-full sm:w-auto sm:inline-flex items-center gap-1 sm:gap-1.5 rounded-2xl border border-white/80 bg-white/65 p-1 shadow-sm backdrop-blur-md">
           <button id="tabAccount" type="button" class="tab-btn active inline-flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 text-xs sm:text-sm font-black whitespace-nowrap">
             <i class="fa-solid fa-users-gear text-cyan-600"></i>
             <span>账号工作台</span>
@@ -245,6 +245,10 @@
             <i class="fa-solid fa-ticket text-blue-600"></i>
             <span>Token 工作台</span>
             <span id="tabTokenBadge" class="rounded-full bg-slate-200 px-1.5 py-0.2 text-[10px] sm:text-xs font-bold text-slate-700">0</span>
+          </button>
+          <button id="tabLive2fa" type="button" class="tab-btn inline-flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 text-xs sm:text-sm font-black whitespace-nowrap">
+            <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+            <span>实时 2FA</span>
           </button>
         </div>
         <div id="accountHeaderActions" class="hidden sm:flex items-center gap-2">
@@ -495,6 +499,47 @@
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 实时 2FA 验证码工作台 -->
+    <section id="live2faWorkspace" class="account-workspace hidden">
+      <div class="glass flex flex-1 flex-col min-h-0 rounded-2xl overflow-hidden shadow-sm">
+        <div class="flex flex-col gap-2.5 border-b border-slate-200/70 p-3 sm:p-5">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div class="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 font-black shadow-sm text-sm sm:text-base">
+                <i class="fa-solid fa-shield-halved"></i>
+              </div>
+              <div class="min-w-0">
+                <h2 class="text-base sm:text-lg font-black text-slate-900 truncate">实时 2FA 验证码</h2>
+                <p id="live2faCount" class="text-xs sm:text-sm text-slate-500 truncate">等待加载</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100/80 border border-slate-200/70">
+                <div id="live2faProgressBar" class="w-20 sm:w-28 h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                  <div id="live2faProgressFill" class="h-full rounded-full bg-emerald-500 transition-all duration-1000 ease-linear" style="width: 100%"></div>
+                </div>
+                <span id="live2faTimeLeft" class="text-xs font-black text-emerald-700 tabular-nums w-5 text-right">30</span>
+                <span class="text-xs text-slate-400">s</span>
+              </div>
+              <button id="refreshLive2faBtn" type="button" class="inline-flex h-9 sm:h-10 w-9 sm:w-auto shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white/80 px-2 sm:px-3.5 text-xs sm:text-sm font-bold text-slate-700 shadow-sm transition hover:border-emerald-200 hover:text-emerald-700 focus-ring" title="刷新账号数据">
+                <i class="fa-solid fa-rotate-right"></i>
+                <span class="hidden sm:inline">刷新</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 sm:p-5 flex-1 min-h-0 overflow-y-auto">
+          <div id="live2faGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+            <div class="col-span-full py-16 text-center text-slate-400">
+              <i class="fa-solid fa-spinner animate-spin text-3xl mb-3 text-slate-300 block"></i>
+              正在加载账号验证码...
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -927,10 +972,17 @@
       // 工作台 Tabs 与区域
       tabToken: document.querySelector("#tabToken"),
       tabAccount: document.querySelector("#tabAccount"),
+      tabLive2fa: document.querySelector("#tabLive2fa"),
       tabTokenBadge: document.querySelector("#tabTokenBadge"),
       tabAccountBadge: document.querySelector("#tabAccountBadge"),
       tokenWorkspace: document.querySelector("#tokenWorkspace"),
       accountWorkspace: document.querySelector("#accountWorkspace"),
+      live2faWorkspace: document.querySelector("#live2faWorkspace"),
+      live2faGrid: document.querySelector("#live2faGrid"),
+      live2faCount: document.querySelector("#live2faCount"),
+      live2faProgressFill: document.querySelector("#live2faProgressFill"),
+      live2faTimeLeft: document.querySelector("#live2faTimeLeft"),
+      refreshLive2faBtn: document.querySelector("#refreshLive2faBtn"),
       accountHeaderActions: document.querySelector("#accountHeaderActions"),
 
       // 账号统计卡片
@@ -1023,6 +1075,15 @@
     let targetDeleteAccountId = "";
     let currentExportUrl = "";
     let currentAccountViewMode = "card";
+    let live2faInterval = null;
+    let live2faAccounts = [];
+
+    function stopLive2faTimer() {
+      if (live2faInterval) {
+        clearInterval(live2faInterval);
+        live2faInterval = null;
+      }
+    }
     try {
       currentAccountViewMode = localStorage.getItem("admin_account_view_mode") || "card";
     } catch {}
@@ -1120,6 +1181,8 @@
     // 工作台切换
     els.tabToken.addEventListener("click", () => switchWorkspace("tokens"));
     els.tabAccount.addEventListener("click", () => switchWorkspace("accounts"));
+    els.tabLive2fa.addEventListener("click", () => switchWorkspace("live2fa"));
+    if (els.refreshLive2faBtn) els.refreshLive2faBtn.addEventListener("click", () => loadLive2faAccounts());
 
     // 账号管理工作台事件
     if (els.openRegisterModalBtn) els.openRegisterModalBtn.addEventListener("click", openRegisterModal);
@@ -1780,40 +1843,58 @@
 
     function switchWorkspace(target) {
       activeWorkspace = target;
+
+      // Reset all tabs
+      els.tabToken.classList.remove("active");
+      els.tabAccount.classList.remove("active");
+      els.tabLive2fa.classList.remove("active");
+
+      // Reset all badge colors
+      if (els.tabTokenBadge) {
+        els.tabTokenBadge.className = "rounded-full bg-slate-200 px-1.5 py-0.2 text-[10px] sm:text-xs font-bold text-slate-700";
+      }
+      if (els.tabAccountBadge) {
+        els.tabAccountBadge.className = "rounded-full bg-slate-200 px-1.5 py-0.2 text-[10px] sm:text-xs font-bold text-slate-700";
+      }
+
+      // Hide all workspaces
+      els.tokenWorkspace.classList.add("hidden");
+      els.accountWorkspace.classList.add("hidden");
+      els.live2faWorkspace.classList.add("hidden");
+
+      // Hide common buttons
+      els.exportBtn.classList.add("hidden");
+      els.refreshBtn.classList.add("hidden");
+      if (els.accountHeaderActions) {
+        els.accountHeaderActions.classList.add("hidden");
+        els.accountHeaderActions.classList.remove("sm:flex", "flex");
+      }
+
       if (target === "tokens") {
         els.tabToken.classList.add("active");
-        els.tabAccount.classList.remove("active");
         if (els.tabTokenBadge) {
           els.tabTokenBadge.className = "rounded-full bg-blue-100 px-1.5 py-0.2 text-[10px] sm:text-xs font-bold text-blue-800";
         }
-        if (els.tabAccountBadge) {
-          els.tabAccountBadge.className = "rounded-full bg-slate-200 px-1.5 py-0.2 text-[10px] sm:text-xs font-bold text-slate-700";
-        }
         els.tokenWorkspace.classList.remove("hidden");
-        els.accountWorkspace.classList.add("hidden");
-        if (els.accountHeaderActions) {
-          els.accountHeaderActions.classList.add("hidden");
-          els.accountHeaderActions.classList.remove("sm:flex", "flex");
-        }
         els.exportBtn.classList.remove("hidden");
         els.refreshBtn.classList.remove("hidden");
+      } else if (target === "live2fa") {
+        els.tabLive2fa.classList.add("active");
+        els.live2faWorkspace.classList.remove("hidden");
+        stopLive2faTimer();
+        loadLive2faAccounts();
       } else {
+        // accounts (default)
         els.tabAccount.classList.add("active");
-        els.tabToken.classList.remove("active");
         if (els.tabAccountBadge) {
           els.tabAccountBadge.className = "rounded-full bg-cyan-100 px-1.5 py-0.2 text-[10px] sm:text-xs font-bold text-cyan-800";
         }
-        if (els.tabTokenBadge) {
-          els.tabTokenBadge.className = "rounded-full bg-slate-200 px-1.5 py-0.2 text-[10px] sm:text-xs font-bold text-slate-700";
-        }
         els.accountWorkspace.classList.remove("hidden");
-        els.tokenWorkspace.classList.add("hidden");
         if (els.accountHeaderActions) {
           els.accountHeaderActions.classList.remove("flex");
           els.accountHeaderActions.classList.add("hidden", "sm:flex");
         }
-        els.exportBtn.classList.add("hidden");
-        els.refreshBtn.classList.add("hidden");
+        stopLive2faTimer();
         loadAccounts({ silent: true });
       }
     }
@@ -2994,6 +3075,240 @@
       setTimeout(() => {
         if (els.accountMessage) els.accountMessage.classList.add("hidden");
       }, 4000);
+    }
+    // ==========================================
+    // 实时 2FA 验证码工作台逻辑 (Live 2FA Workspace)
+    // ==========================================
+
+    const TOTP_PERIOD = 30;
+    const TOTP_DIGITS = 6;
+    const BASE32_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+    function base32Decode(input) {
+      const normalized = input.replace(/[\s=-]+/g, "").toUpperCase();
+      let bits = 0, value = 0;
+      const output = [];
+      for (const c of normalized) {
+        const idx = BASE32_CHARS.indexOf(c);
+        if (idx === -1) return new Uint8Array();
+        value = (value << 5) | idx;
+        bits += 5;
+        if (bits >= 8) {
+          output.push((value >>> (bits - 8)) & 0xff);
+          bits -= 8;
+        }
+      }
+      return new Uint8Array(output);
+    }
+
+    function counterToBytes(counter) {
+      const bytes = new Uint8Array(8);
+      let v = counter;
+      for (let i = 7; i >= 0; i--) {
+        bytes[i] = v & 0xff;
+        v = Math.floor(v / 256);
+      }
+      return bytes;
+    }
+
+    async function computeTotp(secretBase32) {
+      const secretBytes = base32Decode(secretBase32);
+      if (secretBytes.length === 0) return null;
+      const counter = Math.floor(Date.now() / 1000 / TOTP_PERIOD);
+      const key = await crypto.subtle.importKey(
+        "raw", secretBytes, { name: "HMAC", hash: "SHA-1" }, false, ["sign"]
+      );
+      const hmac = new Uint8Array(
+        await crypto.subtle.sign("HMAC", key, counterToBytes(counter))
+      );
+      const offset = hmac[hmac.length - 1] & 0x0f;
+      const binary =
+        ((hmac[offset] & 0x7f) << 24) |
+        ((hmac[offset + 1] & 0xff) << 16) |
+        ((hmac[offset + 2] & 0xff) << 8) |
+        (hmac[offset + 3] & 0xff);
+      return String(binary % (10 ** TOTP_DIGITS)).padStart(TOTP_DIGITS, "0");
+    }
+
+    function getTotpTimeLeft() {
+      return TOTP_PERIOD - (Math.floor(Date.now() / 1000) % TOTP_PERIOD);
+    }
+
+    async function loadLive2faAccounts() {
+      const adminPassword = els.adminPassword.value;
+      if (!adminPassword.trim()) return;
+
+      if (els.refreshLive2faBtn) els.refreshLive2faBtn.disabled = true;
+
+      try {
+        const url = `/api/admin/accounts?adminPassword=${encodeURIComponent(adminPassword)}`;
+        const result = await requestJson(url);
+
+        if (!result.ok) return;
+
+        live2faAccounts = (result.accounts || []).filter(
+          a => a.status === "active" && (a.totpSecret || a.gptTotpSecret)
+        );
+
+        if (els.live2faCount) {
+          els.live2faCount.textContent = `共 ${live2faAccounts.length} 个活跃账号`;
+        }
+
+        await renderLive2faCards();
+        startLive2faTimer();
+      } catch (err) {
+        if (els.live2faGrid) {
+          els.live2faGrid.innerHTML = `
+            <div class="col-span-full py-16 text-center text-red-400">
+              <i class="fa-solid fa-circle-exclamation text-3xl mb-3 block"></i>
+              加载失败：${escapeHtml(err.message || "未知错误")}
+            </div>`;
+        }
+      } finally {
+        if (els.refreshLive2faBtn) els.refreshLive2faBtn.disabled = false;
+      }
+    }
+
+    async function renderLive2faCards() {
+      if (!els.live2faGrid || live2faAccounts.length === 0) {
+        if (els.live2faGrid) {
+          els.live2faGrid.innerHTML = `
+            <div class="col-span-full py-16 text-center text-slate-400">
+              <i class="fa-solid fa-shield-halved text-3xl mb-3 text-slate-300 block"></i>
+              暂无可显示的账号
+            </div>`;
+        }
+        return;
+      }
+
+      const cards = [];
+      for (const acc of live2faAccounts) {
+        const googleCode = acc.totpSecret ? await computeTotp(acc.totpSecret) : null;
+        const gptCode = acc.gptTotpSecret ? await computeTotp(acc.gptTotpSecret) : null;
+        const accountDisplay = escapeHtml(acc.accountId);
+
+        cards.push(`
+          <div class="rounded-2xl border border-slate-200/80 bg-white/90 shadow-sm hover:shadow-md transition-shadow overflow-hidden" data-live2fa-card data-account-id="${escapeAttribute(acc.accountId)}">
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/60">
+              <div class="flex items-center gap-2 min-w-0">
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                  <i class="fa-solid fa-user-shield text-sm"></i>
+                </div>
+                <span class="mono text-sm font-bold text-slate-800 truncate" title="${accountDisplay}">${accountDisplay}</span>
+              </div>
+            </div>
+            <div class="px-4 py-3 space-y-2.5">
+              ${googleCode !== null ? `
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <i class="fa-brands fa-google text-xs"></i>
+                  </div>
+                  <span class="text-xs font-bold text-slate-500">Google</span>
+                </div>
+                <button type="button" class="live2fa-copy-btn group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 transition-all cursor-pointer" data-code="${googleCode}" title="点击复制">
+                  <span class="mono text-lg sm:text-xl font-black text-slate-900 tracking-widest live2fa-code" data-secret="${escapeAttribute(acc.totpSecret)}" data-type="google">${googleCode.slice(0, 3)} ${googleCode.slice(3)}</span>
+                  <i class="fa-regular fa-copy text-slate-400 group-hover:text-blue-600 text-sm transition-colors"></i>
+                </button>
+              </div>` : ""}
+              ${gptCode !== null ? `
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                    <i class="fa-solid fa-robot text-xs"></i>
+                  </div>
+                  <span class="text-xs font-bold text-slate-500">GPT</span>
+                </div>
+                <button type="button" class="live2fa-copy-btn group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 transition-all cursor-pointer" data-code="${gptCode}" title="点击复制">
+                  <span class="mono text-lg sm:text-xl font-black text-slate-900 tracking-widest live2fa-code" data-secret="${escapeAttribute(acc.gptTotpSecret)}" data-type="gpt">${gptCode.slice(0, 3)} ${gptCode.slice(3)}</span>
+                  <i class="fa-regular fa-copy text-slate-400 group-hover:text-emerald-600 text-sm transition-colors"></i>
+                </button>
+              </div>` : ""}
+              ${googleCode === null && gptCode === null ? `
+              <div class="text-center text-xs text-slate-400 py-2">
+                <i class="fa-solid fa-circle-exclamation mr-1"></i>密钥无效
+              </div>` : ""}
+            </div>
+          </div>
+        `);
+      }
+
+      els.live2faGrid.innerHTML = cards.join("");
+
+      // Bind copy events
+      els.live2faGrid.querySelectorAll(".live2fa-copy-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const code = btn.dataset.code;
+          try {
+            await navigator.clipboard.writeText(code);
+          } catch {
+            const ta = document.createElement("textarea");
+            ta.value = code;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            ta.remove();
+          }
+          const icon = btn.querySelector("i");
+          const origClass = icon.className;
+          icon.className = "fa-solid fa-check text-emerald-600 text-sm";
+          btn.classList.add("border-emerald-400", "bg-emerald-50");
+          setTimeout(() => {
+            icon.className = origClass;
+            btn.classList.remove("border-emerald-400", "bg-emerald-50");
+          }, 1200);
+        });
+      });
+    }
+
+    async function updateLive2faCodes() {
+      const codeEls = els.live2faGrid?.querySelectorAll(".live2fa-code");
+      if (!codeEls || codeEls.length === 0) return;
+
+      for (const el of codeEls) {
+        const secret = el.dataset.secret;
+        if (!secret) continue;
+        const code = await computeTotp(secret);
+        if (code) {
+          el.textContent = code.slice(0, 3) + " " + code.slice(3);
+          const btn = el.closest(".live2fa-copy-btn");
+          if (btn) btn.dataset.code = code;
+        }
+      }
+    }
+
+    function updateLive2faProgress() {
+      const timeLeft = getTotpTimeLeft();
+      if (els.live2faTimeLeft) {
+        els.live2faTimeLeft.textContent = timeLeft;
+        els.live2faTimeLeft.style.color = timeLeft <= 5 ? "#ef4444" : "#059669";
+      }
+      if (els.live2faProgressFill) {
+        const pct = (timeLeft / TOTP_PERIOD) * 100;
+        els.live2faProgressFill.style.width = pct + "%";
+        els.live2faProgressFill.style.backgroundColor = timeLeft <= 5 ? "#ef4444" : "#10b981";
+      }
+    }
+
+    function startLive2faTimer() {
+      stopLive2faTimer();
+      let lastCounter = Math.floor(Date.now() / 1000 / TOTP_PERIOD);
+
+      const tick = async () => {
+        if (activeWorkspace !== "live2fa") {
+          stopLive2faTimer();
+          return;
+        }
+        updateLive2faProgress();
+        const currentCounter = Math.floor(Date.now() / 1000 / TOTP_PERIOD);
+        if (currentCounter !== lastCounter) {
+          lastCounter = currentCounter;
+          await updateLive2faCodes();
+        }
+      };
+
+      tick();
+      live2faInterval = setInterval(tick, 500);
     }
   </script>
 </body>
