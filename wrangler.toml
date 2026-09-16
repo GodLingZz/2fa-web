@@ -2,6 +2,9 @@ name = "2fa-web"
 compatibility_date = "2025-12-01"
 pages_build_output_dir = "."
 
+[dev]
+port = 8789
+
 [[d1_databases]]
 binding = "DB"
 database_name = "2fa-token-db"

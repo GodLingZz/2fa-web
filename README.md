@@ -128,11 +128,11 @@ npx wrangler d1 create 2fa-token-db
 npm run dev
 ```
 
-默认会通过 Wrangler 启动 Cloudflare Pages 本地开发服务。启动后可访问：
+默认会通过 Wrangler 启动 Cloudflare Pages 本地开发服务（`dev` 分支默认端口设为 `8789`，调试端口为 `9230`，避免与 `main` 分支的默认 `8788` 冲突）。启动后可访问：
 
-- `/admin.html`：管理端登录页
-- `/admin-console.html`：Token 管理台
-- `/2fa-verify`：公开 2FA 查询页
+- `http://127.0.0.1:8789/admin.html`：管理端登录页
+- `http://127.0.0.1:8789/admin-console.html`：Token 管理台
+- `http://127.0.0.1:8789/2fa-verify`：公开 2FA 查询页
 - `/api/admin/import-csv`：CSV 导入接口
 - `/api/admin/generate-tokens`：手动生成 token 接口
 - `/api/admin/export-unused-tokens`：导出未使用 token Excel 接口

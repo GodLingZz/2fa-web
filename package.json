@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler pages dev . --compatibility-date=2025-12-01",
+    "dev": "wrangler pages dev . --compatibility-date=2025-12-01 --port 8789 --inspector-port 9230",
     "wrangler": "wrangler",
+    "generate-token": "node --experimental-sqlite scripts/generate-one-time-token.mjs",
     "test": "node --test tests/*.test.mjs"
   },
   "devDependencies": {

@@ -132,10 +132,11 @@
       }
 
       .shell {
-        width: min(100vw - 24px, 620px);
+        width: min(100vw - 24px, 920px);
         height: auto;
         min-height: 100vh;
-        padding: 18px 0;
+        padding: 16px 0 28px;
+        gap: 16px;
       }
 
       .console-layout {
@@ -149,43 +150,113 @@
       }
 
       .token-list-panel {
-        min-height: 520px;
+        min-height: 480px;
         max-height: 72vh;
       }
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        width: calc(100vw - 16px);
+        padding: 10px 0 24px;
+        gap: 12px;
+      }
+
+      .console-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+
+
+    .account-workspace {
+      display: flex;
+      min-height: 0;
+      flex: 1 1 auto;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .account-table-scroll {
+      min-height: 0;
+      flex: 1;
+      overflow: auto;
+    }
+
+    .tab-btn {
+      color: var(--muted);
+      border-radius: 12px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+
+    .tab-btn:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.6);
+      color: var(--ink);
+    }
+
+    .tab-btn.active {
+      background: white;
+      color: var(--ink);
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(15, 23, 42, 0.04);
     }
   </style>
 </head>
 <body>
   <main class="shell">
-    <header class="console-header flex flex-col sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <div class="mb-3 inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/60 px-3 py-1 text-xs font-semibold text-slate-500 shadow-sm">
-          <i class="fa-solid fa-shield-halved text-blue-600"></i>
-          Token Console
+    <header class="console-header flex flex-col gap-2.5 sm:gap-3">
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2.5 sm:gap-3">
+        <div>
+          <div class="mb-1.5 sm:mb-2 inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/60 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[11px] sm:text-xs font-semibold text-slate-500 shadow-sm">
+            <i class="fa-solid fa-shield-halved text-blue-600"></i>
+            Token Console
+          </div>
+          <h1 class="text-2xl font-black tracking-tight text-slate-900 sm:text-4xl">2FA Token 管理台</h1>
         </div>
-        <h1 class="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">2FA Token 管理台</h1>
-      </div>
-      <div class="console-actions flex flex-col gap-2 sm:flex-row">
-        <div id="loginStatus" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 text-sm font-bold text-emerald-700 shadow-sm">
-          <i class="fa-solid fa-user-shield"></i>
-          已登录
+        <div class="console-actions flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <div id="loginStatus" class="inline-flex h-9 sm:h-11 items-center justify-center gap-1.5 sm:gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 sm:px-4 text-xs sm:text-sm font-bold text-emerald-700 shadow-sm">
+            <i class="fa-solid fa-user-shield"></i>
+            <span>已登录</span>
+          </div>
+          <button id="exportBtn" class="hidden inline-flex h-9 sm:h-11 items-center justify-center gap-1.5 sm:gap-2 rounded-xl border border-emerald-200 bg-white/80 px-3 sm:px-4 text-xs sm:text-sm font-bold text-emerald-700 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 focus-ring">
+            <i class="fa-solid fa-file-excel"></i>
+            <span>导出未使用</span>
+          </button>
+          <button id="refreshBtn" class="hidden inline-flex h-9 sm:h-11 items-center justify-center gap-1.5 sm:gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 sm:px-4 text-xs sm:text-sm font-bold text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-700 focus-ring">
+            <i class="fa-solid fa-rotate-right"></i>
+            <span>刷新列表</span>
+          </button>
+          <button id="logoutBtn" class="inline-flex h-9 sm:h-11 items-center justify-center gap-1.5 sm:gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 sm:px-4 text-xs sm:text-sm font-bold text-slate-700 shadow-sm transition hover:border-red-200 hover:text-red-700 focus-ring">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>退出</span>
+          </button>
         </div>
-        <button id="exportBtn" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-white/80 px-4 text-sm font-bold text-emerald-700 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 focus-ring">
-          <i class="fa-solid fa-file-excel"></i>
-          导出未使用
-        </button>
-        <button id="refreshBtn" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-4 text-sm font-bold text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-700 focus-ring">
-          <i class="fa-solid fa-rotate-right"></i>
-          刷新列表
-        </button>
-        <button id="logoutBtn" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-4 text-sm font-bold text-slate-700 shadow-sm transition hover:border-red-200 hover:text-red-700 focus-ring">
-          <i class="fa-solid fa-right-from-bracket"></i>
-          退出
-        </button>
       </div>
+
+      <!-- 工作台切换 Tabs -->
+      <nav class="flex items-center justify-between gap-2.5 border-t border-slate-200/70 pt-2.5">
+        <div class="grid grid-cols-2 w-full sm:w-auto sm:inline-flex items-center gap-1 sm:gap-1.5 rounded-2xl border border-white/80 bg-white/65 p-1 shadow-sm backdrop-blur-md">
+          <button id="tabAccount" type="button" class="tab-btn active inline-flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 text-xs sm:text-sm font-black whitespace-nowrap">
+            <i class="fa-solid fa-users-gear text-cyan-600"></i>
+            <span>账号工作台</span>
+            <span id="tabAccountBadge" class="rounded-full bg-cyan-100 px-1.5 py-0.2 text-[10px] sm:text-xs font-bold text-cyan-800">0</span>
+          </button>
+          <button id="tabToken" type="button" class="tab-btn inline-flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 text-xs sm:text-sm font-black whitespace-nowrap">
+            <i class="fa-solid fa-ticket text-blue-600"></i>
+            <span>Token 工作台</span>
+            <span id="tabTokenBadge" class="rounded-full bg-slate-200 px-1.5 py-0.2 text-[10px] sm:text-xs font-bold text-slate-700">0</span>
+          </button>
+        </div>
+        <div id="accountHeaderActions" class="hidden sm:flex items-center gap-2">
+          <button id="refreshAccountsBtn" type="button" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-700 focus-ring">
+            <i class="fa-solid fa-rotate-right"></i>
+            刷新账号
+          </button>
+        </div>
+      </nav>
     </header>
 
-    <section class="console-layout">
+    <section id="tokenWorkspace" class="console-layout hidden">
       <div class="glass entry-panel rounded-2xl p-5">
         <div class="import-strip mb-5 rounded-xl border border-white/70 p-4">
           <div class="flex items-center gap-3">
@@ -194,7 +265,7 @@
             </div>
             <div>
               <h2 class="text-lg font-black text-slate-900">CSV 导入</h2>
-              <p class="text-sm text-slate-500">token_code, account_id, account_password, totp_secret, status</p>
+              <p class="text-sm text-slate-500">token_code, account_id, account_password, totp_secret, gpt_totp_secret, status</p>
             </div>
           </div>
         </div>
@@ -209,7 +280,7 @@
 
           <label class="block">
             <span class="mb-2 block text-sm font-bold text-slate-700">CSV 内容</span>
-            <textarea id="csvText" class="focus-ring mono min-h-[260px] w-full resize-y rounded-xl border border-slate-200 bg-white/72 p-4 text-sm leading-6 text-slate-800" spellcheck="false" placeholder="token_code,account_id,account_password,totp_secret,status&#10;TK-A7KD-9M2Q-X4ZT-P8CN,user001,DemoPass2026!,JBSWY3DPEHPK3PXP,active&#10;,user002,DemoPass2026!,JBSWY3DPEHPK3PXP,active"></textarea>
+            <textarea id="csvText" class="focus-ring mono min-h-[260px] w-full resize-y rounded-xl border border-slate-200 bg-white/72 p-4 text-sm leading-6 text-slate-800" spellcheck="false" placeholder="token_code,account_id,account_password,totp_secret,gpt_totp_secret,status&#10;TK-A7KD-9M2Q-X4ZT-P8CN,user001,DemoPass2026!,JBSWY3DPEHPK3PXP,JBSWY3DPEHPK3PXQ,active&#10;,user002,DemoPass2026!,JBSWY3DPEHPK3PXP,,active"></textarea>
           </label>
 
           <div class="flex flex-col gap-3 sm:flex-row">
@@ -232,7 +303,7 @@
               </div>
               <div>
                 <h2 class="text-lg font-black text-slate-900">手动生成</h2>
-                <p class="text-sm text-slate-500">账号 + Base32 密钥 + 生成数量</p>
+                <p class="text-sm text-slate-500">账号 + 密码 + 双 2FA 密钥 + 生成数量</p>
               </div>
             </div>
           </div>
@@ -249,8 +320,16 @@
             </label>
 
             <label class="block">
-              <span class="mb-2 block text-sm font-bold text-slate-700">2FA Base32 密钥</span>
+              <span class="mb-2 block text-sm font-bold text-slate-700">Google 2FA Base32 密钥</span>
               <input id="manualTotpSecret" type="text" autocomplete="off" class="focus-ring mono h-12 w-full rounded-xl border border-slate-200 bg-white/70 px-4 text-sm text-slate-800" placeholder="JBSWY3DPEHPK3PXP">
+            </label>
+
+            <label class="block">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-bold text-slate-700">GPT 2FA Base32 密钥</span>
+                <span class="text-xs text-slate-400 font-normal">选填（若账号开启GPT 2FA）</span>
+              </div>
+              <input id="manualGptTotpSecret" type="text" autocomplete="off" class="focus-ring mono h-12 w-full rounded-xl border border-slate-200 bg-white/70 px-4 text-sm text-slate-800" placeholder="JBSWY3DPEHPK3PXQ（可选）">
             </label>
 
             <div class="grid gap-3 sm:grid-cols-[1fr_1fr]">
@@ -308,7 +387,8 @@
               <tr>
                 <th class="px-5 py-3 font-black">Token</th>
                 <th class="px-5 py-3 font-black">账号</th>
-                <th class="px-5 py-3 font-black">2FA 密钥</th>
+                <th class="px-5 py-3 font-black">Google 2FA</th>
+                <th class="px-5 py-3 font-black">GPT 2FA</th>
                 <th class="px-5 py-3 font-black">状态</th>
                 <th class="px-5 py-3 font-black">创建时间</th>
                 <th class="px-5 py-3 font-black">使用时间</th>
@@ -316,9 +396,101 @@
             </thead>
             <tbody id="tokenRows" class="divide-y divide-slate-100 bg-white/35">
               <tr>
-                <td colspan="6" class="px-5 py-12 text-center text-slate-500">
+                <td colspan="7" class="px-5 py-12 text-center text-slate-500">
                   <i class="fa-regular fa-folder-open mb-3 block text-3xl text-slate-300"></i>
                   输入管理员密码后刷新列表
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 账号管理工作台 -->
+    <section id="accountWorkspace" class="account-workspace">
+      <!-- 账号主表格面板 -->
+      <div class="glass flex flex-1 flex-col min-h-0 rounded-2xl overflow-hidden shadow-sm">
+        <div class="flex flex-col gap-2.5 border-b border-slate-200/70 p-3 sm:p-5">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div class="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-cyan-700 font-black shadow-sm text-sm sm:text-base">
+                <i class="fa-solid fa-address-book"></i>
+              </div>
+              <div class="min-w-0">
+                <h2 class="text-base sm:text-lg font-black text-slate-900 truncate">账号管理工作台</h2>
+                <p id="accountTableCount" class="text-xs sm:text-sm text-slate-500 truncate">等待读取账号</p>
+              </div>
+            </div>
+            <button id="openRegisterModalBtn2" type="button" class="inline-flex h-9 sm:h-10 shrink-0 items-center justify-center gap-1.5 sm:gap-2 rounded-xl bg-blue-600 px-3 sm:px-4 text-xs sm:text-sm font-black text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 focus-ring">
+              <i class="fa-solid fa-plus"></i>
+              <span>注册账号</span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-1 sm:gap-2">
+            <div class="relative flex-1 min-w-[90px] sm:w-60">
+              <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input id="accountSearchInput" type="search" class="focus-ring h-9 sm:h-10 w-full rounded-xl border border-slate-200 bg-white/70 pl-7 sm:pl-9 pr-2 text-xs sm:text-sm" placeholder="搜索 ID/备注">
+            </div>
+            <select id="quickAccountSelect" class="focus-ring h-9 sm:h-10 w-28 sm:w-48 rounded-xl border border-slate-200 bg-white/70 px-2 sm:px-3 text-xs sm:text-sm font-semibold text-slate-700 shrink-0 truncate" title="快速选择账号">
+              <option value="">快速选择账号</option>
+            </select>
+            <select id="accountStatusFilter" class="focus-ring h-9 sm:h-10 w-16 sm:w-auto rounded-xl border border-slate-200 bg-white/70 px-1 sm:px-3 text-xs sm:text-sm font-semibold text-slate-700 shrink-0">
+              <option value="">全部</option>
+              <option value="active">正常</option>
+              <option value="disabled">停用</option>
+            </select>
+
+            <!-- 视图模式切换器 -->
+            <div class="inline-flex rounded-xl border border-slate-200 bg-slate-100/90 p-0.5 sm:p-1 shadow-2xs shrink-0">
+              <button id="accountViewCardBtn" type="button" class="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-1 sm:px-3 sm:py-1.5 text-xs font-black text-blue-700 shadow-sm transition" title="结构化卡片视图">
+                <i class="fa-solid fa-table-cells-large"></i>
+                <span class="hidden sm:inline">卡片</span>
+              </button>
+              <button id="accountViewTableBtn" type="button" class="inline-flex items-center gap-1 rounded-lg px-2 py-1 sm:px-3 sm:py-1.5 text-xs font-bold text-slate-600 transition hover:text-blue-700" title="精简表格视图">
+                <i class="fa-solid fa-table-list"></i>
+                <span class="hidden sm:inline">表格</span>
+              </button>
+            </div>
+
+            <button id="refreshAccountsBtn2" type="button" class="inline-flex h-9 sm:h-10 w-9 sm:w-auto shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white/80 px-2 sm:px-3.5 text-xs sm:text-sm font-bold text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-700 focus-ring" title="刷新账号数据">
+              <i class="fa-solid fa-rotate-right"></i>
+              <span class="hidden sm:inline">刷新</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="accountMessage" class="hidden mx-3 sm:mx-5 mt-3 sm:mt-4 rounded-xl border p-3 sm:p-4 text-xs sm:text-sm"></div>
+
+        <!-- 1. 结构化卡片视图容器 (默认主视图) -->
+        <div id="accountCardsContainer" class="p-3 sm:p-5 flex-1 min-h-0 overflow-y-auto">
+          <div id="accountCardsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5">
+            <div class="col-span-full py-16 text-center text-slate-400">
+              <i class="fa-solid fa-spinner animate-spin text-3xl mb-3 text-slate-300 block"></i>
+              正在加载账号...
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. 精简表格视图容器 (备选切换) -->
+        <div id="accountTableContainer" class="account-table-scroll hidden">
+          <table class="data-table w-full border-collapse text-left text-sm">
+            <thead class="bg-slate-50/80 text-xs uppercase text-slate-500">
+              <tr>
+                <th class="px-5 py-3 font-black">账号 ID 与备注</th>
+                <th class="px-5 py-3 font-black">状态</th>
+                <th class="px-5 py-3 font-black">Token 存量与进度</th>
+                <th class="px-5 py-3 font-black text-center">快捷复制未用 Token</th>
+                <th class="px-5 py-3 font-black">账号凭据</th>
+                <th class="px-5 py-3 font-black text-right pr-6">操作</th>
+              </tr>
+            </thead>
+            <tbody id="accountRows" class="divide-y divide-slate-100 bg-white/35">
+              <tr>
+                <td colspan="6" class="px-5 py-12 text-center text-slate-500">
+                  <i class="fa-regular fa-folder-open mb-3 block text-3xl text-slate-300"></i>
+                  正在加载账号列表...
                 </td>
               </tr>
             </tbody>
@@ -361,8 +533,363 @@
     </div>
   </div>
 
+  <!-- 注册新账号弹窗 -->
+  <div id="registerAccountDialog" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/45 p-2 sm:p-4 backdrop-blur-sm">
+    <div class="w-full max-w-lg rounded-2xl border border-white/80 bg-white p-4 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div class="mb-3 sm:mb-4 flex items-start justify-between gap-3">
+        <div>
+          <div class="mb-2 inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+            <i class="fa-solid fa-user-plus text-lg sm:text-xl"></i>
+          </div>
+          <h2 class="text-lg sm:text-xl font-black text-slate-900">注册新账号</h2>
+          <div class="mt-2 rounded-xl bg-blue-50/70 border border-blue-100 p-2 sm:p-2.5 text-xs text-blue-800 flex items-center gap-2">
+            <i class="fa-solid fa-circle-info text-blue-600 shrink-0"></i>
+            <span>同账号不允许再次注册，系统有且仅能有一个同名称账号。</span>
+          </div>
+        </div>
+        <button type="button" class="close-modal-btn inline-flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-red-200 hover:text-red-600 focus-ring" data-close-modal="registerAccountDialog">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="registerAccountForm" class="space-y-4">
+        <label class="block">
+          <span class="mb-1.5 block text-sm font-bold text-slate-700">账号 ID / 用户名 <span class="text-red-500">*</span></span>
+          <input id="regAccountId" type="text" required class="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800" placeholder="例如 user001 或 user@example.com">
+          <p class="mt-1 text-xs text-slate-400">作为账号唯一识别名称，注册后不可修改。</p>
+        </label>
+
+        <label class="block">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-sm font-bold text-slate-700">账号密码 <span class="text-red-500">*</span></span>
+            <button id="genRandomPassBtn" type="button" class="text-xs font-bold text-blue-600 hover:text-blue-700">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> 随机强密码
+            </button>
+          </div>
+          <div class="relative">
+            <input id="regAccountPassword" type="text" autocomplete="off" required class="focus-ring mono h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800" placeholder="DemoPass2026!">
+          </div>
+        </label>
+
+        <label class="block">
+          <span class="mb-1.5 block text-sm font-bold text-slate-700">Google 2FA Base32 密钥 <span class="text-red-500">*</span></span>
+          <input id="regTotpSecret" type="text" autocomplete="off" required class="focus-ring mono h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 uppercase" placeholder="JBSWY3DPEHPK3PXP">
+          <p class="mt-1 text-xs text-slate-400">支持 16~32 位 Base32 密钥，系统将使用 AES-256 加密保存。</p>
+        </label>
+
+        <label class="block">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-sm font-bold text-slate-700">GPT 2FA Base32 密钥</span>
+            <span class="text-xs text-slate-400 font-normal">选填</span>
+          </div>
+          <input id="regGptTotpSecret" type="text" autocomplete="off" class="focus-ring mono h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 uppercase" placeholder="若账号开通 GPT 2FA 则填写">
+        </label>
+
+        <div class="grid gap-3 sm:grid-cols-2">
+          <label class="block">
+            <span class="mb-1.5 block text-sm font-bold text-slate-700">初始派发 Token 数量</span>
+            <input id="regInitialTokens" type="number" min="0" max="100" value="0" class="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800">
+            <p class="mt-1 text-xs text-slate-400">0 为不生成，1-100 为创建后立即发码</p>
+          </label>
+
+          <label class="block">
+            <span class="mb-1.5 block text-sm font-bold text-slate-700">账号状态</span>
+            <select id="regStatus" class="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800">
+              <option value="active">active (正常启用)</option>
+              <option value="disabled">disabled (已停用)</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="block">
+          <span class="mb-1.5 block text-sm font-bold text-slate-700">备注说明</span>
+          <input id="regNote" type="text" class="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800" placeholder="例如 VIP 客户专用 / 备用账号">
+        </label>
+
+        <div id="registerErrorBox" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700"></div>
+
+        <div class="mt-6 flex flex-col gap-2 sm:flex-row">
+          <button type="button" class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50 focus-ring" data-close-modal="registerAccountDialog">
+            取消
+          </button>
+          <button id="submitRegisterBtn" type="submit" class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99] focus-ring">
+            <i class="fa-solid fa-check"></i>
+            确认注册
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 编辑账号弹窗 -->
+  <div id="editAccountDialog" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/45 p-2 sm:p-4 backdrop-blur-sm">
+    <div class="w-full max-w-lg rounded-2xl border border-white/80 bg-white p-4 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div class="mb-3 sm:mb-4 flex items-start justify-between gap-3">
+        <div>
+          <div class="mb-2 inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+            <i class="fa-solid fa-user-pen text-lg sm:text-xl"></i>
+          </div>
+          <h2 class="text-lg sm:text-xl font-black text-slate-900">编辑账号信息</h2>
+          <p class="mt-1 text-xs sm:text-sm text-slate-500">账号 ID 固定唯一，可修改密码、2FA 密钥与状态。</p>
+        </div>
+        <button type="button" class="close-modal-btn inline-flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-red-200 hover:text-red-600 focus-ring" data-close-modal="editAccountDialog">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="editAccountForm" class="space-y-4">
+        <label class="block">
+          <span class="mb-1.5 block text-sm font-bold text-slate-700">账号 ID</span>
+          <input id="editAccountId" type="text" readonly class="mono h-11 w-full rounded-xl border border-slate-200 bg-slate-100 px-4 text-sm text-slate-600 cursor-not-allowed">
+        </label>
+
+        <label class="block">
+          <span class="mb-1.5 block text-sm font-bold text-slate-700">账号密码</span>
+          <input id="editAccountPassword" type="text" autocomplete="off" class="focus-ring mono h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800">
+        </label>
+
+        <label class="block">
+          <span class="mb-1.5 block text-sm font-bold text-slate-700">Google 2FA Base32 密钥</span>
+          <input id="editTotpSecret" type="text" autocomplete="off" class="focus-ring mono h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 uppercase">
+        </label>
+
+        <label class="block">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-sm font-bold text-slate-700">GPT 2FA Base32 密钥</span>
+            <label class="inline-flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer">
+              <input id="editClearGptSecret" type="checkbox" class="rounded text-blue-600"> 清空 GPT 密钥
+            </label>
+          </div>
+          <input id="editGptTotpSecret" type="text" autocomplete="off" class="focus-ring mono h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 uppercase" placeholder="留空则保持原值">
+        </label>
+
+        <div class="grid gap-3 sm:grid-cols-2">
+          <label class="block">
+            <span class="mb-1.5 block text-sm font-bold text-slate-700">账号状态</span>
+            <select id="editStatus" class="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800">
+              <option value="active">active (正常启用)</option>
+              <option value="disabled">disabled (已停用)</option>
+            </select>
+          </label>
+
+          <label class="block">
+            <span class="mb-1.5 block text-sm font-bold text-slate-700">备注说明</span>
+            <input id="editNote" type="text" class="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800">
+          </label>
+        </div>
+
+        <div class="rounded-xl border border-blue-100 bg-blue-50/70 p-3">
+          <label class="flex items-start gap-2 text-xs font-semibold text-blue-900 cursor-pointer">
+            <input id="editSyncActiveTokens" type="checkbox" checked class="mt-0.5 rounded text-blue-600">
+            <span>同步更新该账号下「尚未使用的 Token (active)」的密码与 2FA 密钥（推荐勾选，保证未消费 Token 与最新凭证一致）</span>
+          </label>
+        </div>
+
+        <div id="editErrorBox" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700"></div>
+
+        <div class="mt-6 flex flex-col gap-2 sm:flex-row">
+          <button type="button" class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50 focus-ring" data-close-modal="editAccountDialog">
+            取消
+          </button>
+          <button id="submitEditBtn" type="submit" class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 text-sm font-black text-white shadow-lg shadow-amber-600/20 transition hover:bg-amber-700 active:scale-[0.99] focus-ring">
+            <i class="fa-solid fa-floppy-disk"></i>
+            保存修改
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 账号快捷发码弹窗 -->
+  <div id="accountGenerateDialog" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/45 p-2 sm:p-4 backdrop-blur-sm">
+    <div class="w-full max-w-md rounded-2xl border border-white/80 bg-white p-4 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div class="mb-3 sm:mb-4 flex items-start justify-between gap-3">
+        <div>
+          <div class="mb-2 inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-cyan-50 text-cyan-700">
+            <i class="fa-solid fa-bolt text-lg sm:text-xl"></i>
+          </div>
+          <h2 class="text-lg sm:text-xl font-black text-slate-900">快速生成 Token</h2>
+          <p class="mt-1 text-xs text-slate-500">使用该账号现存的密码与 2FA 密钥批量生成。</p>
+        </div>
+        <button type="button" class="close-modal-btn inline-flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-red-200 hover:text-red-600 focus-ring" data-close-modal="accountGenerateDialog">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="mb-4 rounded-xl border border-cyan-100 bg-cyan-50/60 p-3.5 flex items-center justify-between">
+        <div>
+          <div class="text-xs font-bold text-cyan-800">目标账号</div>
+          <div id="quickGenAccountId" class="font-black text-slate-900 mono text-sm">user001</div>
+        </div>
+        <span class="rounded-full bg-cyan-600/10 px-2.5 py-1 text-xs font-black text-cyan-800">专属发码</span>
+      </div>
+
+      <form id="accountGenerateForm" class="space-y-4">
+        <div class="grid gap-3 sm:grid-cols-2">
+          <label class="block">
+            <span class="mb-1.5 block text-sm font-bold text-slate-700">生成数量 (1-100)</span>
+            <input id="quickGenCount" type="number" min="1" max="100" value="5" required class="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800">
+          </label>
+
+          <label class="block">
+            <span class="mb-1.5 block text-sm font-bold text-slate-700">初始状态</span>
+            <select id="quickGenStatus" class="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800">
+              <option value="active">active (可用)</option>
+              <option value="disabled">disabled (停用)</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="quickGenResult" class="hidden rounded-xl border border-emerald-200 bg-emerald-50/80 p-3.5">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-black text-emerald-800">生成成功！</span>
+            <button id="copyAllQuickGenBtn" type="button" class="text-xs font-bold text-emerald-700 underline hover:text-emerald-900">
+              <i class="fa-regular fa-copy"></i> 全部复制
+            </button>
+          </div>
+          <div id="quickGenTokensList" class="mono max-h-32 overflow-y-auto rounded-lg bg-white/80 p-2 text-xs space-y-1 text-slate-800"></div>
+        </div>
+
+        <div class="mt-5 flex flex-col gap-2 sm:flex-row">
+          <button type="button" class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50 focus-ring" data-close-modal="accountGenerateDialog">
+            关闭
+          </button>
+          <button id="submitQuickGenBtn" type="submit" class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-cyan-700 px-5 text-sm font-black text-white shadow-lg shadow-cyan-700/20 transition hover:bg-cyan-800 active:scale-[0.99] focus-ring">
+            <i class="fa-solid fa-plus"></i>
+            立即生成
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 账号 Token 明细与使用记录抽屉/模态框 -->
+  <div id="accountTokensDialog" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/45 p-2 sm:p-4 backdrop-blur-sm">
+    <div class="w-full max-w-3xl rounded-2xl border border-white/80 bg-white p-3.5 sm:p-6 shadow-2xl max-h-[92vh] flex flex-col">
+      <!-- 弹窗头部 -->
+      <div class="mb-3 sm:mb-4 flex items-start justify-between gap-3 pb-3 sm:pb-4 border-b border-slate-100">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div class="inline-flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+              <i class="fa-solid fa-clock-rotate-left text-base sm:text-lg"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <h2 class="text-base sm:text-xl font-black text-slate-900 truncate">Token 状态与使用记录</h2>
+                <span id="detailAccountIdBadge" class="mono rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-black text-slate-700 truncate">user001</span>
+              </div>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 truncate sm:whitespace-normal">查看名下所有 Token 的实时状态与使用/核销时间流水。</p>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="close-modal-btn inline-flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-red-200 hover:text-red-600 focus-ring" data-close-modal="accountTokensDialog">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- 账号信息与统计条 -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 mb-3 sm:mb-4">
+        <div class="rounded-xl border border-slate-200/80 bg-slate-50 p-2 sm:p-3 text-center">
+          <div class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase">Token 总数</div>
+          <div id="detailStatTotal" class="mono text-base sm:text-lg font-black text-slate-800">0</div>
+        </div>
+        <div class="rounded-xl border border-emerald-100 bg-emerald-50/60 p-2 sm:p-3 text-center">
+          <div class="text-[10px] sm:text-[11px] font-bold text-emerald-700 uppercase">未使用 (active)</div>
+          <div id="detailStatActive" class="mono text-base sm:text-lg font-black text-emerald-700">0</div>
+        </div>
+        <div class="rounded-xl border border-amber-100 bg-amber-50/60 p-2 sm:p-3 text-center">
+          <div class="text-[10px] sm:text-[11px] font-bold text-amber-700 uppercase">已使用 (used)</div>
+          <div id="detailStatUsed" class="mono text-base sm:text-lg font-black text-amber-700">0</div>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-100/70 p-2 sm:p-3 text-center">
+          <div class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase">已停用 (disabled)</div>
+          <div id="detailStatDisabled" class="mono text-base sm:text-lg font-black text-slate-600">0</div>
+        </div>
+      </div>
+
+      <!-- 工具栏 -->
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div class="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-[180px]">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input id="detailTokenSearch" type="search" class="focus-ring h-9 w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-xs" placeholder="过滤 Token 编码">
+          </div>
+          <select id="detailStatusFilter" class="focus-ring h-9 rounded-lg border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-700">
+            <option value="">全部状态</option>
+            <option value="active">仅看未使用</option>
+            <option value="used">仅看已使用</option>
+            <option value="disabled">仅看已停用</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <button id="detailCopyActiveBtn" type="button" class="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/80 px-2.5 sm:px-3 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100 focus-ring">
+            <i class="fa-regular fa-copy"></i>
+            <span>复制未使用</span>
+          </button>
+          <button id="detailQuickGenBtn" type="button" class="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-cyan-700 px-2.5 sm:px-3 text-xs font-bold text-white transition hover:bg-cyan-800 focus-ring">
+            <i class="fa-solid fa-plus"></i>
+            <span>追加发码</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 记录列表表格 -->
+      <div class="flex-1 min-h-0 overflow-auto rounded-xl border border-slate-200">
+        <table class="w-full border-collapse text-left text-xs min-w-[540px]">
+          <thead class="sticky top-0 bg-slate-100 text-slate-600 uppercase font-black z-10 border-b border-slate-200">
+            <tr>
+              <th class="px-4 py-2.5">Token 编码</th>
+              <th class="px-4 py-2.5">当前状态</th>
+              <th class="px-4 py-2.5">创建时间</th>
+              <th class="px-4 py-2.5">使用记录时间 (核销时间)</th>
+              <th class="px-4 py-2.5 text-right pr-4">操作</th>
+            </tr>
+          </thead>
+          <tbody id="detailTokenRows" class="divide-y divide-slate-100 bg-white">
+            <tr>
+              <td colspan="5" class="px-4 py-8 text-center text-slate-400">
+                加载 Token 记录中...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除账号确认弹窗 -->
+  <div id="deleteAccountDialog" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/45 p-2 sm:p-4 backdrop-blur-sm">
+    <div class="w-full max-w-md rounded-2xl border border-white/80 bg-white p-4 sm:p-6 shadow-2xl">
+      <div class="mb-4 flex items-start gap-4">
+        <div class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
+          <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+        </div>
+        <div>
+          <h2 class="text-xl font-black text-slate-900">删除账号确认</h2>
+          <p class="mt-1 text-sm leading-6 text-slate-600">
+            确定要删除账号 <span id="deleteTargetAccountId" class="font-black text-slate-900 mono"></span> 吗？
+          </p>
+          <p class="mt-2 rounded-lg bg-red-50 p-2.5 text-xs text-red-700 font-semibold border border-red-100">
+            ⚠️ 警告：删除账号将同步删除该账号下的所有 Token 数据与使用记录，操作后无法撤销！
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-col gap-2 sm:flex-row">
+        <button type="button" class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50 focus-ring" data-close-modal="deleteAccountDialog">
+          取消
+        </button>
+        <button id="confirmDeleteAccountBtn" type="button" class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 px-5 text-sm font-black text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700 active:scale-[0.99] focus-ring">
+          <i class="fa-solid fa-trash-can"></i>
+          确认彻底删除
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const els = {
+      // 原 Token 管理台元素
       form: document.querySelector("#importForm"),
       generateForm: document.querySelector("#generateForm"),
       adminPassword: document.querySelector("#adminPassword"),
@@ -371,6 +898,7 @@
       manualAccountId: document.querySelector("#manualAccountId"),
       manualAccountPassword: document.querySelector("#manualAccountPassword"),
       manualTotpSecret: document.querySelector("#manualTotpSecret"),
+      manualGptTotpSecret: document.querySelector("#manualGptTotpSecret"),
       manualCount: document.querySelector("#manualCount"),
       manualStatus: document.querySelector("#manualStatus"),
       importBtn: document.querySelector("#importBtn"),
@@ -394,11 +922,110 @@
       tokenCount: document.querySelector("#tokenCount"),
       filterInput: document.querySelector("#filterInput"),
       accountFilter: document.querySelector("#accountFilter"),
-      statusFilter: document.querySelector("#statusFilter")
+      statusFilter: document.querySelector("#statusFilter"),
+
+      // 工作台 Tabs 与区域
+      tabToken: document.querySelector("#tabToken"),
+      tabAccount: document.querySelector("#tabAccount"),
+      tabTokenBadge: document.querySelector("#tabTokenBadge"),
+      tabAccountBadge: document.querySelector("#tabAccountBadge"),
+      tokenWorkspace: document.querySelector("#tokenWorkspace"),
+      accountWorkspace: document.querySelector("#accountWorkspace"),
+      accountHeaderActions: document.querySelector("#accountHeaderActions"),
+
+      // 账号统计卡片
+      statTotalAccounts: document.querySelector("#statTotalAccounts"),
+      statActiveAccounts: document.querySelector("#statActiveAccounts"),
+      statTotalTokens: document.querySelector("#statTotalTokens"),
+      statActiveTokens: document.querySelector("#statActiveTokens"),
+      statUsedTokens: document.querySelector("#statUsedTokens"),
+
+      // 账号视图与筛选
+      accountTableCount: document.querySelector("#accountTableCount"),
+      accountSearchInput: document.querySelector("#accountSearchInput"),
+      quickAccountSelect: document.querySelector("#quickAccountSelect"),
+      accountStatusFilter: document.querySelector("#accountStatusFilter"),
+      accountCardsContainer: document.querySelector("#accountCardsContainer"),
+      accountCardsGrid: document.querySelector("#accountCardsGrid"),
+      accountTableContainer: document.querySelector("#accountTableContainer"),
+      accountViewCardBtn: document.querySelector("#accountViewCardBtn"),
+      accountViewTableBtn: document.querySelector("#accountViewTableBtn"),
+      accountRows: document.querySelector("#accountRows"),
+      accountMessage: document.querySelector("#accountMessage"),
+      openRegisterModalBtn: document.querySelector("#openRegisterModalBtn"),
+      openRegisterModalBtn2: document.querySelector("#openRegisterModalBtn2"),
+      refreshAccountsBtn: document.querySelector("#refreshAccountsBtn"),
+      refreshAccountsBtn2: document.querySelector("#refreshAccountsBtn2"),
+
+      // 注册账号弹窗
+      registerAccountDialog: document.querySelector("#registerAccountDialog"),
+      registerAccountForm: document.querySelector("#registerAccountForm"),
+      regAccountId: document.querySelector("#regAccountId"),
+      regAccountPassword: document.querySelector("#regAccountPassword"),
+      regTotpSecret: document.querySelector("#regTotpSecret"),
+      regGptTotpSecret: document.querySelector("#regGptTotpSecret"),
+      regInitialTokens: document.querySelector("#regInitialTokens"),
+      regStatus: document.querySelector("#regStatus"),
+      regNote: document.querySelector("#regNote"),
+      registerErrorBox: document.querySelector("#registerErrorBox"),
+      submitRegisterBtn: document.querySelector("#submitRegisterBtn"),
+      genRandomPassBtn: document.querySelector("#genRandomPassBtn"),
+
+      // 编辑账号弹窗
+      editAccountDialog: document.querySelector("#editAccountDialog"),
+      editAccountForm: document.querySelector("#editAccountForm"),
+      editAccountId: document.querySelector("#editAccountId"),
+      editAccountPassword: document.querySelector("#editAccountPassword"),
+      editTotpSecret: document.querySelector("#editTotpSecret"),
+      editGptTotpSecret: document.querySelector("#editGptTotpSecret"),
+      editClearGptSecret: document.querySelector("#editClearGptSecret"),
+      editStatus: document.querySelector("#editStatus"),
+      editNote: document.querySelector("#editNote"),
+      editSyncActiveTokens: document.querySelector("#editSyncActiveTokens"),
+      editErrorBox: document.querySelector("#editErrorBox"),
+      submitEditBtn: document.querySelector("#submitEditBtn"),
+
+      // 快速发码弹窗
+      accountGenerateDialog: document.querySelector("#accountGenerateDialog"),
+      accountGenerateForm: document.querySelector("#accountGenerateForm"),
+      quickGenAccountId: document.querySelector("#quickGenAccountId"),
+      quickGenCount: document.querySelector("#quickGenCount"),
+      quickGenStatus: document.querySelector("#quickGenStatus"),
+      quickGenResult: document.querySelector("#quickGenResult"),
+      quickGenTokensList: document.querySelector("#quickGenTokensList"),
+      copyAllQuickGenBtn: document.querySelector("#copyAllQuickGenBtn"),
+      submitQuickGenBtn: document.querySelector("#submitQuickGenBtn"),
+
+      // 账号 Token 列表与使用记录弹窗
+      accountTokensDialog: document.querySelector("#accountTokensDialog"),
+      detailAccountIdBadge: document.querySelector("#detailAccountIdBadge"),
+      detailStatTotal: document.querySelector("#detailStatTotal"),
+      detailStatActive: document.querySelector("#detailStatActive"),
+      detailStatUsed: document.querySelector("#detailStatUsed"),
+      detailStatDisabled: document.querySelector("#detailStatDisabled"),
+      detailTokenSearch: document.querySelector("#detailTokenSearch"),
+      detailStatusFilter: document.querySelector("#detailStatusFilter"),
+      detailTokenRows: document.querySelector("#detailTokenRows"),
+      detailCopyActiveBtn: document.querySelector("#detailCopyActiveBtn"),
+      detailQuickGenBtn: document.querySelector("#detailQuickGenBtn"),
+
+      // 删除账号弹窗
+      deleteAccountDialog: document.querySelector("#deleteAccountDialog"),
+      deleteTargetAccountId: document.querySelector("#deleteTargetAccountId"),
+      confirmDeleteAccountBtn: document.querySelector("#confirmDeleteAccountBtn")
     };
 
     let tokens = [];
+    let accounts = [];
+    let currentAccountTokens = [];
+    let activeWorkspace = "accounts";
+    let currentDetailAccountId = "";
+    let targetDeleteAccountId = "";
     let currentExportUrl = "";
+    let currentAccountViewMode = "card";
+    try {
+      currentAccountViewMode = localStorage.getItem("admin_account_view_mode") || "card";
+    } catch {}
 
     const storedAdminPassword = sessionStorage.getItem("adminPassword") || "";
 
@@ -406,13 +1033,14 @@
       window.location.href = "/admin.html";
     } else {
       els.adminPassword.value = storedAdminPassword;
+      switchWorkspace("accounts");
       loadTokens({ silent: true });
     }
 
     const sampleCsv = [
-      "token_code,account_id,account_password,totp_secret,status",
-      "TK-A7KD-9M2Q-X4ZT-P8CN,user001,DemoPass2026!,JBSWY3DPEHPK3PXP,active",
-      ",user002,DemoPass2026!,JBSWY3DPEHPK3PXP,active"
+      "token_code,account_id,account_password,totp_secret,gpt_totp_secret,status",
+      "TK-A7KD-9M2Q-X4ZT-P8CN,user001,DemoPass2026!,JBSWY3DPEHPK3PXP,JBSWY3DPEHPK3PXQ,active",
+      ",user002,DemoPass2026!,JBSWY3DPEHPK3PXP,,active"
     ].join("\n");
 
     els.sampleBtn.addEventListener("click", () => {
@@ -489,6 +1117,132 @@
       await generateTokens();
     });
 
+    // 工作台切换
+    els.tabToken.addEventListener("click", () => switchWorkspace("tokens"));
+    els.tabAccount.addEventListener("click", () => switchWorkspace("accounts"));
+
+    // 账号管理工作台事件
+    if (els.openRegisterModalBtn) els.openRegisterModalBtn.addEventListener("click", openRegisterModal);
+    if (els.openRegisterModalBtn2) els.openRegisterModalBtn2.addEventListener("click", openRegisterModal);
+    if (els.refreshAccountsBtn) els.refreshAccountsBtn.addEventListener("click", () => loadAccounts());
+    if (els.refreshAccountsBtn2) els.refreshAccountsBtn2.addEventListener("click", () => loadAccounts());
+    if (els.accountSearchInput) {
+      els.accountSearchInput.addEventListener("input", () => {
+        if (els.accountSearchInput.value.trim() && els.quickAccountSelect) {
+          els.quickAccountSelect.value = "";
+        }
+        renderAccounts();
+      });
+    }
+    if (els.quickAccountSelect) {
+      els.quickAccountSelect.addEventListener("change", () => {
+        if (els.quickAccountSelect.value && els.accountSearchInput) {
+          els.accountSearchInput.value = "";
+        }
+        renderAccounts();
+      });
+    }
+    if (els.accountStatusFilter) els.accountStatusFilter.addEventListener("change", renderAccounts);
+    initAccountViewMode();
+
+    // 注册账号表单提交
+    if (els.registerAccountForm) {
+      els.registerAccountForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        await registerAccount();
+      });
+    }
+
+    // 随机密码生成按钮
+    if (els.genRandomPassBtn) {
+      els.genRandomPassBtn.addEventListener("click", () => {
+        els.regAccountPassword.value = generateRandomPassword();
+      });
+    }
+
+    // 编辑账号表单提交
+    if (els.editAccountForm) {
+      els.editAccountForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        await saveEditAccount();
+      });
+    }
+
+    // 快捷发码表单提交
+    if (els.accountGenerateForm) {
+      els.accountGenerateForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        await submitQuickGenerate();
+      });
+    }
+
+    // 复制全部快捷发码结果
+    if (els.copyAllQuickGenBtn) {
+      els.copyAllQuickGenBtn.addEventListener("click", async () => {
+        const tokensToCopy = els.quickGenTokensList.innerText.trim();
+        if (!tokensToCopy) return;
+        await copyTextToClipboard(tokensToCopy);
+        els.copyAllQuickGenBtn.innerHTML = '<i class="fa-solid fa-check"></i> 已复制全部';
+        setTimeout(() => {
+          els.copyAllQuickGenBtn.innerHTML = '<i class="fa-regular fa-copy"></i> 全部复制';
+        }, 1200);
+      });
+    }
+
+    // 账号详情抽屉工具栏事件
+    if (els.detailTokenSearch) els.detailTokenSearch.addEventListener("input", renderAccountTokens);
+    if (els.detailStatusFilter) els.detailStatusFilter.addEventListener("change", renderAccountTokens);
+    if (els.detailCopyActiveBtn) {
+      els.detailCopyActiveBtn.addEventListener("click", async () => {
+        const activeTokens = currentAccountTokens.filter(t => t.status === "active").map(t => t.tokenCode);
+        if (activeTokens.length === 0) {
+          alert("当前账号暂无未使用的 Token");
+          return;
+        }
+        await copyTextToClipboard(activeTokens.join("\n"));
+        els.detailCopyActiveBtn.innerHTML = '<i class="fa-solid fa-check"></i> 已复制';
+        setTimeout(() => {
+          els.detailCopyActiveBtn.innerHTML = '<i class="fa-regular fa-copy"></i> 复制未使用';
+        }, 1200);
+      });
+    }
+    if (els.detailQuickGenBtn) {
+      els.detailQuickGenBtn.addEventListener("click", () => {
+        closeModal("accountTokensDialog");
+        openQuickGenModal(currentDetailAccountId);
+      });
+    }
+
+    // 确认删除账号
+    if (els.confirmDeleteAccountBtn) {
+      els.confirmDeleteAccountBtn.addEventListener("click", async () => {
+        await executeDeleteAccount();
+      });
+    }
+
+    // 模态框统一关闭按钮
+    document.querySelectorAll("[data-close-modal]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        closeModal(btn.dataset.closeModal);
+      });
+    });
+
+    // 点击背景遮罩关闭模态框
+    [
+      els.registerAccountDialog,
+      els.editAccountDialog,
+      els.accountGenerateDialog,
+      els.accountTokensDialog,
+      els.deleteAccountDialog
+    ].forEach((dialog) => {
+      if (!dialog) return;
+      dialog.addEventListener("click", (e) => {
+        if (e.target === dialog) {
+          closeModal(dialog.id);
+        }
+      });
+    });
+
     async function importCsv() {
       const adminPassword = els.adminPassword.value;
       const csv = els.csvText.value;
@@ -539,6 +1293,7 @@
       const accountId = els.manualAccountId.value;
       const accountPassword = els.manualAccountPassword.value;
       const totpSecret = els.manualTotpSecret.value;
+      const gptTotpSecret = els.manualGptTotpSecret.value;
       const count = Number(els.manualCount.value);
       const status = els.manualStatus.value;
 
@@ -561,7 +1316,7 @@
       }
 
       if (!totpSecret.trim()) {
-        showMessage("error", "请填写 2FA Base32 密钥。");
+        showMessage("error", "请填写 Google 2FA Base32 密钥。");
         els.manualTotpSecret.focus();
         return;
       }
@@ -579,7 +1334,7 @@
         const result = await requestJson("/api/admin/generate-tokens", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ adminPassword, accountId, accountPassword, totpSecret, count, status })
+          body: JSON.stringify({ adminPassword, accountId, accountPassword, totpSecret, gptTotpSecret, count, status })
         });
 
         if (!result.ok) {
@@ -671,6 +1426,7 @@
         }
 
         tokens = Array.isArray(result.tokens) ? result.tokens : [];
+        if (els.tabTokenBadge) els.tabTokenBadge.textContent = tokens.length;
         updateAccountFilterOptions();
         renderTokens();
 
@@ -756,6 +1512,7 @@
         const statusIcon = isActive ? "fa-circle-check" : isUsed ? "fa-circle-xmark" : "fa-circle-pause";
         const statusText = isActive ? "active" : isUsed ? "used" : "disabled";
         const maskedSecret = maskSecret(token.totpSecret || "");
+        const maskedGptSecret = token.gptTotpSecret ? maskSecret(token.gptTotpSecret) : "-";
 
         return `
           <tr class="transition hover:bg-blue-50/40">
@@ -766,7 +1523,7 @@
             </td>
             <td class="px-5 py-4 font-semibold text-slate-700">${escapeHtml(token.accountId)}</td>
             <td class="px-5 py-4">
-              <div class="flex min-w-[240px] items-center gap-2">
+              <div class="flex min-w-[220px] items-center gap-2">
                 <code class="mono rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-black text-slate-700" data-secret-text="${escapeAttribute(token.totpSecret || "")}" data-secret-mask="${escapeAttribute(maskedSecret)}">${escapeHtml(maskedSecret)}</code>
                 <button type="button" class="rounded-lg border border-slate-200 bg-white/72 px-2.5 py-1 text-xs font-bold text-slate-600 transition hover:border-blue-300 hover:text-blue-700" data-toggle-secret>
                   查看
@@ -775,6 +1532,19 @@
                   复制
                 </button>
               </div>
+            </td>
+            <td class="px-5 py-4">
+              ${token.gptTotpSecret ? `
+                <div class="flex min-w-[220px] items-center gap-2">
+                  <code class="mono rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-800" data-secret-text="${escapeAttribute(token.gptTotpSecret)}" data-secret-mask="${escapeAttribute(maskedGptSecret)}">${escapeHtml(maskedGptSecret)}</code>
+                  <button type="button" class="rounded-lg border border-slate-200 bg-white/72 px-2.5 py-1 text-xs font-bold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" data-toggle-secret>
+                    查看
+                  </button>
+                  <button type="button" class="rounded-lg border border-slate-200 bg-white/72 px-2.5 py-1 text-xs font-bold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" data-copy-secret="${escapeAttribute(token.gptTotpSecret)}">
+                    复制
+                  </button>
+                </div>
+              ` : `<span class="text-xs text-slate-300 font-mono">-</span>`}
             </td>
             <td class="px-5 py-4">
               <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-black ${statusClass}">
@@ -1002,6 +1772,1228 @@
 
     function escapeAttribute(value) {
       return escapeHtml(value).replaceAll("`", "&#096;");
+    }
+
+    // ==========================================
+    // 账号管理工作台逻辑 (Account Workspace Logic)
+    // ==========================================
+
+    function switchWorkspace(target) {
+      activeWorkspace = target;
+      if (target === "tokens") {
+        els.tabToken.classList.add("active");
+        els.tabAccount.classList.remove("active");
+        if (els.tabTokenBadge) {
+          els.tabTokenBadge.className = "rounded-full bg-blue-100 px-1.5 py-0.2 text-[10px] sm:text-xs font-bold text-blue-800";
+        }
+        if (els.tabAccountBadge) {
+          els.tabAccountBadge.className = "rounded-full bg-slate-200 px-1.5 py-0.2 text-[10px] sm:text-xs font-bold text-slate-700";
+        }
+        els.tokenWorkspace.classList.remove("hidden");
+        els.accountWorkspace.classList.add("hidden");
+        if (els.accountHeaderActions) {
+          els.accountHeaderActions.classList.add("hidden");
+          els.accountHeaderActions.classList.remove("sm:flex", "flex");
+        }
+        els.exportBtn.classList.remove("hidden");
+        els.refreshBtn.classList.remove("hidden");
+      } else {
+        els.tabAccount.classList.add("active");
+        els.tabToken.classList.remove("active");
+        if (els.tabAccountBadge) {
+          els.tabAccountBadge.className = "rounded-full bg-cyan-100 px-1.5 py-0.2 text-[10px] sm:text-xs font-bold text-cyan-800";
+        }
+        if (els.tabTokenBadge) {
+          els.tabTokenBadge.className = "rounded-full bg-slate-200 px-1.5 py-0.2 text-[10px] sm:text-xs font-bold text-slate-700";
+        }
+        els.accountWorkspace.classList.remove("hidden");
+        els.tokenWorkspace.classList.add("hidden");
+        if (els.accountHeaderActions) {
+          els.accountHeaderActions.classList.remove("flex");
+          els.accountHeaderActions.classList.add("hidden", "sm:flex");
+        }
+        els.exportBtn.classList.add("hidden");
+        els.refreshBtn.classList.add("hidden");
+        loadAccounts({ silent: true });
+      }
+    }
+
+    async function loadAccounts(options = {}) {
+      const adminPassword = els.adminPassword.value;
+      if (!adminPassword.trim()) {
+        return;
+      }
+
+      if (els.refreshAccountsBtn) els.refreshAccountsBtn.disabled = true;
+      if (els.refreshAccountsBtn2) els.refreshAccountsBtn2.disabled = true;
+
+      try {
+        const url = `/api/admin/accounts?adminPassword=${encodeURIComponent(adminPassword)}`;
+        const result = await requestJson(url);
+
+        if (!result.ok) {
+          if (!options.silent) {
+            showAccountMessage("error", result.message || "读取账号列表失败。");
+          }
+          return;
+        }
+
+        accounts = Array.isArray(result.accounts) ? result.accounts : [];
+        if (els.tabAccountBadge) els.tabAccountBadge.textContent = accounts.length;
+
+        // 更新快速选择账号下拉选项与概览统计
+        updateQuickAccountSelectOptions();
+        updateAccountStats();
+        renderAccounts();
+
+        if (!options.silent) {
+          showAccountMessage("ok", "账号列表已刷新。");
+        }
+      } catch (err) {
+        if (!options.silent) {
+          showAccountMessage("error", err.message || "读取账号列表失败。");
+        }
+      } finally {
+        if (els.refreshAccountsBtn) els.refreshAccountsBtn.disabled = false;
+        if (els.refreshAccountsBtn2) els.refreshAccountsBtn2.disabled = false;
+      }
+    }
+
+    function updateQuickAccountSelectOptions() {
+      if (!els.quickAccountSelect) return;
+      const currentSelected = els.quickAccountSelect.value;
+      const options = [
+        '<option value="">快速选择账号</option>',
+        ...accounts.map((acc) => {
+          const display = acc.note ? `${acc.accountId} (${acc.note})` : acc.accountId;
+          return `<option value="${escapeAttribute(acc.accountId)}">${escapeHtml(display)}</option>`;
+        })
+      ];
+      els.quickAccountSelect.innerHTML = options.join("");
+      if (accounts.some(a => a.accountId === currentSelected)) {
+        els.quickAccountSelect.value = currentSelected;
+      } else {
+        els.quickAccountSelect.value = "";
+      }
+    }
+
+    function updateAccountStats() {
+      const totalAccounts = accounts.length;
+      const activeAccounts = accounts.filter(a => a.status === "active").length;
+
+      let totalTokens = 0;
+      let activeTokens = 0;
+      let usedTokens = 0;
+
+      for (const a of accounts) {
+        totalTokens += Number(a.totalTokens || 0);
+        activeTokens += Number(a.activeTokens || 0);
+        usedTokens += Number(a.usedTokens || 0);
+      }
+
+      if (els.statTotalAccounts) els.statTotalAccounts.textContent = totalAccounts;
+      if (els.statActiveAccounts) els.statActiveAccounts.textContent = activeAccounts;
+      if (els.statTotalTokens) els.statTotalTokens.textContent = totalTokens;
+      if (els.statActiveTokens) els.statActiveTokens.textContent = activeTokens;
+      if (els.statUsedTokens) els.statUsedTokens.textContent = usedTokens;
+    }
+
+    // ==========================================
+    // 账号视图模式管理与快速复制交互
+    // ==========================================
+
+    function initAccountViewMode() {
+      setAccountViewMode(currentAccountViewMode);
+      if (els.accountViewCardBtn) {
+        els.accountViewCardBtn.addEventListener("click", () => setAccountViewMode("card"));
+      }
+      if (els.accountViewTableBtn) {
+        els.accountViewTableBtn.addEventListener("click", () => setAccountViewMode("table"));
+      }
+    }
+
+    function setAccountViewMode(mode) {
+      currentAccountViewMode = mode;
+      try {
+        localStorage.setItem("admin_account_view_mode", mode);
+      } catch {}
+
+      if (mode === "card") {
+        if (els.accountCardsContainer) els.accountCardsContainer.classList.remove("hidden");
+        if (els.accountTableContainer) els.accountTableContainer.classList.add("hidden");
+        if (els.accountViewCardBtn) {
+          els.accountViewCardBtn.className = "inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-black text-blue-700 shadow-sm transition";
+        }
+        if (els.accountViewTableBtn) {
+          els.accountViewTableBtn.className = "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:text-blue-700";
+        }
+      } else {
+        if (els.accountCardsContainer) els.accountCardsContainer.classList.add("hidden");
+        if (els.accountTableContainer) els.accountTableContainer.classList.remove("hidden");
+        if (els.accountViewTableBtn) {
+          els.accountViewTableBtn.className = "inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-black text-blue-700 shadow-sm transition";
+        }
+        if (els.accountViewCardBtn) {
+          els.accountViewCardBtn.className = "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:text-blue-700";
+        }
+      }
+    }
+
+    function renderAccounts() {
+      const query = (els.accountSearchInput?.value || "").trim().toLowerCase();
+      const statusFilter = els.accountStatusFilter?.value || "";
+      const selectedAccount = els.quickAccountSelect?.value || "";
+
+      const visible = accounts.filter((a) => {
+        const matchesAccount = !selectedAccount || a.accountId === selectedAccount;
+        const matchesQuery = !query ||
+          a.accountId.toLowerCase().includes(query) ||
+          (a.note && a.note.toLowerCase().includes(query));
+        const matchesStatus = !statusFilter || a.status === statusFilter;
+        return matchesAccount && matchesQuery && matchesStatus;
+      });
+
+      if (els.accountTableCount) {
+        els.accountTableCount.textContent = `${visible.length} / ${accounts.length} 个账号`;
+      }
+
+      renderAccountCards(visible);
+      renderAccountTableRows(visible);
+
+      // 绑定快捷发码、记录、编辑、删除操作
+      document.querySelectorAll("[data-account-action]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const action = btn.dataset.accountAction;
+          const accountId = btn.dataset.accountId;
+          if (action === "generate") {
+            openQuickGenModal(accountId);
+          } else if (action === "tokens") {
+            openAccountTokensModal(accountId);
+          } else if (action === "edit") {
+            const acc = accounts.find(a => a.accountId === accountId);
+            if (acc) openEditModal(acc);
+          } else if (action === "delete") {
+            openDeleteAccountModal(accountId);
+          }
+        });
+      });
+
+      // 绑定卡片凭据一键明文/脱敏切换
+      bindCardRevealControls();
+
+      // 绑定快速复制未用 Token
+      bindQuickCopyButtons();
+
+      // 绑定基础复制与脱敏切换按钮
+      bindSecretControls();
+    }
+
+    function renderAccountCards(visible) {
+      if (!els.accountCardsGrid) return;
+
+      if (accounts.length === 0) {
+        els.accountCardsGrid.innerHTML = `
+          <div class="col-span-full py-16 text-center text-slate-400 glass rounded-2xl p-8">
+            <i class="fa-regular fa-folder-open mb-3 block text-4xl text-slate-300"></i>
+            <div class="text-base font-bold text-slate-700 mb-1">暂无账号档案</div>
+            <div class="text-xs text-slate-400 mb-4">点击上方「注册新账号」添加系统首个托管账号</div>
+            <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-black text-white shadow-md hover:bg-blue-700 transition" onclick="openRegisterModal()">
+              <i class="fa-solid fa-plus"></i> 立即注册账号
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      if (visible.length === 0) {
+        els.accountCardsGrid.innerHTML = `
+          <div class="col-span-full py-16 text-center text-slate-400 glass rounded-2xl p-8">
+            <i class="fa-solid fa-magnifying-glass mb-3 block text-3xl text-slate-300"></i>
+            <div class="text-sm font-bold text-slate-600">未找到匹配的账号</div>
+            <div class="text-xs text-slate-400 mt-1">请尝试更换搜索关键字或状态筛选</div>
+          </div>
+        `;
+        return;
+      }
+
+      els.accountCardsGrid.innerHTML = visible.map((acc) => {
+        const isActive = acc.status === "active";
+        const statusClass = isActive
+          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+          : "bg-slate-100 text-slate-600 border-slate-200";
+        const statusIcon = isActive ? "fa-circle-check" : "fa-circle-pause";
+        const statusText = isActive ? "正常 active" : "已停用 disabled";
+
+        const maskedPass = acc.accountPassword ? "•".repeat(Math.min(acc.accountPassword.length, 12)) : "-";
+        const maskedTotp = acc.totpSecret ? maskSecret(acc.totpSecret) : "-";
+        const maskedGpt = acc.gptTotpSecret ? maskSecret(acc.gptTotpSecret) : "-";
+
+        const total = acc.totalTokens || 0;
+        const activePct = total > 0 ? Math.round((acc.activeTokens / total) * 100) : 0;
+        const usedPct = total > 0 ? Math.round((acc.usedTokens / total) * 100) : 0;
+        const disabledPct = total > 0 ? Math.max(0, 100 - activePct - usedPct) : 0;
+
+        return `
+          <div class="glass flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white/90 p-3.5 sm:p-5 shadow-sm transition hover:shadow-md hover:border-blue-200" data-account-card="${escapeAttribute(acc.accountId)}">
+            <div>
+              <!-- 1. 卡片头部：身份、备注与状态 -->
+              <div class="flex items-start justify-between gap-2.5 mb-3">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-50 to-indigo-100 text-blue-700 font-black text-sm sm:text-base shadow-sm">
+                    <i class="fa-solid fa-user-shield"></i>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-black text-slate-900 mono text-sm sm:text-base truncate" title="${escapeAttribute(acc.accountId)}">${escapeHtml(acc.accountId)}</span>
+                      <button type="button" class="text-slate-400 hover:text-blue-600 transition" data-copy="${escapeAttribute(acc.accountId)}" title="复制账号 ID">
+                        <i class="fa-regular fa-copy text-xs"></i>
+                      </button>
+                    </div>
+                    <div class="text-[11px] sm:text-xs text-slate-400 truncate mt-0.5" title="${escapeAttribute(acc.note || '无备注')}">${acc.note ? escapeHtml(acc.note) : '暂无备注说明'}</div>
+                  </div>
+                </div>
+                <span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] sm:text-xs font-bold shrink-0 ${statusClass}">
+                  <i class="fa-solid ${statusIcon} text-[10px]"></i> ${statusText}
+                </span>
+              </div>
+
+              <!-- 2. 🌟 核心操作：快速复制未用 Token -->
+              <div class="my-3 sm:my-4">
+                ${acc.activeTokens > 0 ? `
+                  <button type="button" class="quick-copy-token-btn group relative flex w-full items-center justify-between overflow-hidden rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-black text-white shadow-md shadow-emerald-600/20 transition-all hover:from-emerald-700 hover:to-teal-700 hover:shadow-lg active:scale-[0.99] cursor-pointer" data-account-id="${escapeAttribute(acc.accountId)}" data-token="${escapeAttribute(acc.firstActiveToken || '')}">
+                    <span class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                      <i class="fa-solid fa-bolt text-amber-300 transition group-hover:scale-110 shrink-0 text-xs sm:text-sm"></i>
+                      <span class="whitespace-nowrap">快速复制未用 Token</span>
+                    </span>
+                    <span class="rounded-lg bg-black/25 px-2 py-0.5 text-[11px] sm:text-xs font-mono font-bold text-emerald-100 card-active-token-badge whitespace-nowrap shrink-0 ml-1.5 sm:ml-2">余 ${acc.activeTokens} 个可用</span>
+                  </button>
+                ` : `
+                  <button type="button" class="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-amber-300 bg-amber-50/70 px-3 py-2.5 text-xs font-bold text-amber-800 transition hover:bg-amber-100 hover:border-amber-400 cursor-pointer" data-account-action="generate" data-account-id="${escapeAttribute(acc.accountId)}">
+                    <i class="fa-solid fa-circle-plus text-amber-600"></i>
+                    <span>暂无未用 Token，点击立即发码</span>
+                  </button>
+                `}
+              </div>
+
+              <!-- 3. Token 存量与进度条 -->
+              <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-2.5 sm:p-3 mb-3 sm:mb-4">
+                <div class="flex items-center justify-between text-xs mb-1.5">
+                  <span class="font-bold text-slate-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-ticket text-cyan-600"></i> Token 存量统计
+                  </span>
+                  <button type="button" class="font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition" data-account-action="tokens" data-account-id="${escapeAttribute(acc.accountId)}">
+                    <span>使用记录流水</span>
+                    <i class="fa-solid fa-angle-right text-[10px]"></i>
+                  </button>
+                </div>
+
+                <div class="h-2 w-full overflow-hidden rounded-full bg-slate-200/80 flex mb-2">
+                  <div style="width: ${activePct}%;" class="bg-emerald-500 transition-all" title="未使用: ${acc.activeTokens}"></div>
+                  <div style="width: ${usedPct}%;" class="bg-amber-500 transition-all" title="已使用: ${acc.usedTokens}"></div>
+                  <div style="width: ${disabledPct}%;" class="bg-slate-400 transition-all" title="已停用: ${acc.disabledTokens}"></div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-1.5 sm:gap-2 text-center text-xs">
+                  <div class="rounded-lg bg-white p-1.5 sm:p-2 border border-slate-100 shadow-2xs">
+                    <div class="text-slate-400 text-[10px] sm:text-[11px] font-semibold">未使用</div>
+                    <div class="mono font-black text-emerald-700 text-xs sm:text-sm mt-0.5 card-active-count">${acc.activeTokens || 0}</div>
+                  </div>
+                  <div class="rounded-lg bg-white p-1.5 sm:p-2 border border-slate-100 shadow-2xs">
+                    <div class="text-slate-400 text-[10px] sm:text-[11px] font-semibold">已使用</div>
+                    <div class="mono font-black text-amber-700 text-xs sm:text-sm mt-0.5">${acc.usedTokens || 0}</div>
+                  </div>
+                  <div class="rounded-lg bg-white p-1.5 sm:p-2 border border-slate-100 shadow-2xs">
+                    <div class="text-slate-400 text-[10px] sm:text-[11px] font-semibold">总存量</div>
+                    <div class="mono font-black text-slate-800 text-xs sm:text-sm mt-0.5">${acc.totalTokens || 0}</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 4. 账号凭据区 (精致收拢保护) -->
+              <div class="card-credentials rounded-xl border border-slate-200/70 bg-white/80 p-2.5 sm:p-3 mb-2" data-card-account="${escapeAttribute(acc.accountId)}">
+                <div class="flex items-center justify-between text-xs mb-1.5 sm:mb-2">
+                  <span class="font-bold text-slate-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-key text-slate-500"></i> 账号凭据
+                  </span>
+                  <button type="button" class="text-xs font-bold text-slate-500 hover:text-blue-700 flex items-center gap-1 transition" data-card-reveal="${escapeAttribute(acc.accountId)}">
+                    <i class="fa-regular fa-eye"></i> <span>显示明文</span>
+                  </button>
+                </div>
+
+                <div class="space-y-1 sm:space-y-1.5 text-xs">
+                  <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100">
+                    <span class="text-slate-400 font-semibold shrink-0">密码:</span>
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <code class="mono text-slate-700 truncate font-semibold" data-secret-val="${escapeAttribute(acc.accountPassword || '')}" data-secret-mask="${escapeAttribute(maskedPass)}" data-is-shown="false">${escapeHtml(maskedPass)}</code>
+                      <button type="button" class="text-slate-400 hover:text-blue-600 transition" data-copy="${escapeAttribute(acc.accountPassword || '')}" title="复制密码">
+                        <i class="fa-regular fa-copy text-xs"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100">
+                    <span class="text-slate-400 font-semibold shrink-0">Google 2FA:</span>
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <code class="mono text-slate-700 truncate font-semibold" data-secret-val="${escapeAttribute(acc.totpSecret || '')}" data-secret-mask="${escapeAttribute(maskedTotp)}" data-is-shown="false">${escapeHtml(maskedTotp)}</code>
+                      <button type="button" class="text-slate-400 hover:text-blue-600 transition" data-copy="${escapeAttribute(acc.totpSecret || '')}" title="复制 Google 2FA 密钥">
+                        <i class="fa-regular fa-copy text-xs"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-2 py-1">
+                    <span class="text-slate-400 font-semibold shrink-0">GPT 2FA:</span>
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      ${acc.gptTotpSecret ? `
+                        <code class="mono text-emerald-800 truncate font-semibold" data-secret-val="${escapeAttribute(acc.gptTotpSecret)}" data-secret-mask="${escapeAttribute(maskedGpt)}" data-is-shown="false">${escapeHtml(maskedGpt)}</code>
+                        <button type="button" class="text-slate-400 hover:text-emerald-700 transition" data-copy="${escapeAttribute(acc.gptTotpSecret)}" title="复制 GPT 2FA 密钥">
+                          <i class="fa-regular fa-copy text-xs"></i>
+                        </button>
+                      ` : `
+                        <span class="text-slate-300">未配置</span>
+                      `}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. 卡片底栏：操作按钮组 -->
+            <div class="flex items-center justify-between pt-2.5 sm:pt-3 border-t border-slate-100 mt-2">
+              <div class="flex items-center gap-1.5 sm:gap-2">
+                <button type="button" class="inline-flex items-center gap-1 sm:gap-1.5 rounded-xl border border-cyan-200 bg-cyan-50/80 px-2.5 sm:px-3 py-1.5 text-xs font-black text-cyan-800 transition hover:bg-cyan-100 focus-ring" data-account-action="generate" data-account-id="${escapeAttribute(acc.accountId)}" title="快速追加发码">
+                  <i class="fa-solid fa-plus"></i> <span>追加发码</span>
+                </button>
+                <button type="button" class="inline-flex items-center gap-1 sm:gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 sm:px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-blue-200 hover:text-blue-700 focus-ring" data-account-action="tokens" data-account-id="${escapeAttribute(acc.accountId)}" title="查看该账号名下完整流水">
+                  <i class="fa-solid fa-clock-rotate-left"></i> <span>流水记录</span>
+                </button>
+              </div>
+              <div class="flex items-center gap-0.5 sm:gap-1">
+                <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-amber-50 hover:text-amber-700 transition" data-account-action="edit" data-account-id="${escapeAttribute(acc.accountId)}" title="编辑账号">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition" data-account-action="delete" data-account-id="${escapeAttribute(acc.accountId)}" title="删除账号">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderAccountTableRows(visible) {
+      if (!els.accountRows) return;
+
+      if (accounts.length === 0) {
+        els.accountRows.innerHTML = `
+          <tr>
+            <td colspan="6" class="px-5 py-12 text-center text-slate-500">
+              <i class="fa-regular fa-folder-open mb-3 block text-3xl text-slate-300"></i>
+              暂无账号记录，点击上方「注册新账号」添加第一个账号
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      if (visible.length === 0) {
+        els.accountRows.innerHTML = `
+          <tr>
+            <td colspan="6" class="px-5 py-12 text-center text-slate-500">
+              <i class="fa-regular fa-folder-open mb-3 block text-3xl text-slate-300"></i>
+              未找到匹配的账号记录
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      els.accountRows.innerHTML = visible.map((acc) => {
+        const isActive = acc.status === "active";
+        const statusClass = isActive
+          ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+          : "bg-slate-100 text-slate-600 border-slate-200";
+        const statusIcon = isActive ? "fa-circle-check" : "fa-circle-pause";
+        const statusText = isActive ? "active" : "disabled";
+
+        const maskedPass = acc.accountPassword ? "•".repeat(Math.min(acc.accountPassword.length, 12)) : "-";
+        const maskedTotp = acc.totpSecret ? maskSecret(acc.totpSecret) : "-";
+        const maskedGpt = acc.gptTotpSecret ? maskSecret(acc.gptTotpSecret) : "-";
+
+        return `
+          <tr class="transition hover:bg-blue-50/35">
+            <!-- 1. 账号 ID 与备注 -->
+            <td class="px-5 py-4">
+              <div class="flex items-center gap-2.5">
+                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-bold text-sm shrink-0">
+                  <i class="fa-solid fa-user"></i>
+                </div>
+                <div>
+                  <div class="font-black text-slate-900 mono text-sm flex items-center gap-1.5">
+                    <span>${escapeHtml(acc.accountId)}</span>
+                    <button type="button" class="text-slate-400 hover:text-blue-600 transition" data-copy="${escapeAttribute(acc.accountId)}" title="复制账号 ID">
+                      <i class="fa-regular fa-copy text-xs"></i>
+                    </button>
+                  </div>
+                  ${acc.note ? `<div class="text-xs text-slate-400 truncate max-w-[200px] mt-0.5">${escapeHtml(acc.note)}</div>` : ""}
+                </div>
+              </div>
+            </td>
+
+            <!-- 2. 状态 -->
+            <td class="px-5 py-4">
+              <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-black ${statusClass}">
+                <i class="fa-solid ${statusIcon}"></i>
+                ${statusText}
+              </span>
+            </td>
+
+            <!-- 3. Token 存量与进度 -->
+            <td class="px-5 py-4">
+              <div class="flex items-center gap-2">
+                <span class="rounded-md border border-emerald-100 bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-700" title="未使用 Token">
+                  未用 ${acc.activeTokens || 0}
+                </span>
+                <span class="rounded-md border border-amber-100 bg-amber-50 px-2 py-1 text-xs font-black text-amber-700" title="已使用 Token">
+                  已用 ${acc.usedTokens || 0}
+                </span>
+                <span class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-600" title="总存量">
+                  总 ${acc.totalTokens || 0}
+                </span>
+              </div>
+            </td>
+
+            <!-- 4. 🌟 快捷复制未用 Token -->
+            <td class="px-5 py-4 text-center">
+              ${acc.activeTokens > 0 ? `
+                <button type="button" class="quick-copy-token-btn inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-1.5 text-xs font-black text-white shadow-sm hover:from-emerald-700 hover:to-teal-700 transition active:scale-95 cursor-pointer" data-account-id="${escapeAttribute(acc.accountId)}" data-token="${escapeAttribute(acc.firstActiveToken || '')}">
+                  <i class="fa-solid fa-bolt text-amber-300"></i>
+                  <span>复制未用 Token</span>
+                </button>
+              ` : `
+                <button type="button" class="inline-flex items-center gap-1 rounded-xl border border-dashed border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700 hover:bg-amber-100 cursor-pointer" data-account-action="generate" data-account-id="${escapeAttribute(acc.accountId)}">
+                  <i class="fa-solid fa-plus text-[10px]"></i> 补发
+                </button>
+              `}
+            </td>
+
+            <!-- 5. 账号凭据 (精简组合) -->
+            <td class="px-5 py-4">
+              <div class="flex items-center gap-2 text-xs">
+                <span class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-0.5 font-mono text-slate-700">
+                  <span class="text-slate-400">密码</span>
+                  <button type="button" class="text-slate-400 hover:text-blue-600 ml-1" data-copy="${escapeAttribute(acc.accountPassword || '')}" title="复制密码">
+                    <i class="fa-regular fa-copy text-[11px]"></i>
+                  </button>
+                </span>
+
+                <span class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-0.5 font-mono text-slate-700">
+                  <span class="text-slate-400">Google</span>
+                  <button type="button" class="text-slate-400 hover:text-blue-600 ml-1" data-copy="${escapeAttribute(acc.totpSecret || '')}" title="复制 Google 2FA 密钥">
+                    <i class="fa-regular fa-copy text-[11px]"></i>
+                  </button>
+                </span>
+
+                ${acc.gptTotpSecret ? `
+                  <span class="inline-flex items-center gap-1 rounded-md border border-emerald-100 bg-emerald-50 px-2 py-0.5 font-mono text-emerald-800">
+                    <span>GPT</span>
+                    <button type="button" class="text-emerald-600 hover:text-emerald-800 ml-1" data-copy="${escapeAttribute(acc.gptTotpSecret)}" title="复制 GPT 2FA 密钥">
+                      <i class="fa-regular fa-copy text-[11px]"></i>
+                    </button>
+                  </span>
+                ` : ""}
+              </div>
+            </td>
+
+            <!-- 6. 操作 -->
+            <td class="px-5 py-4 text-right pr-6">
+              <div class="inline-flex items-center gap-1.5">
+                <button type="button" class="inline-flex items-center gap-1 rounded-lg border border-cyan-200 bg-cyan-50/70 px-2.5 py-1.5 text-xs font-black text-cyan-800 transition hover:bg-cyan-100 focus-ring" data-account-action="generate" data-account-id="${escapeAttribute(acc.accountId)}" title="为该账号快速发码">
+                  <i class="fa-solid fa-plus"></i> 发码
+                </button>
+                <button type="button" class="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50/70 px-2.5 py-1.5 text-xs font-black text-indigo-800 transition hover:bg-indigo-100 focus-ring" data-account-action="tokens" data-account-id="${escapeAttribute(acc.accountId)}" title="查看该账号名下 Token 与使用记录流水">
+                  <i class="fa-solid fa-clock-rotate-left"></i> 记录
+                </button>
+                <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-amber-300 hover:text-amber-700 focus-ring" data-account-action="edit" data-account-id="${escapeAttribute(acc.accountId)}" title="编辑账号">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-red-300 hover:text-red-700 focus-ring" data-account-action="delete" data-account-id="${escapeAttribute(acc.accountId)}" title="删除账号">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function bindCardRevealControls() {
+      document.querySelectorAll("[data-card-reveal]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const accountId = btn.dataset.cardReveal;
+          const container = document.querySelector(`.card-credentials[data-card-account="${accountId}"]`);
+          if (!container) return;
+
+          const codes = container.querySelectorAll("[data-secret-val]");
+          let nowShowing = false;
+          codes.forEach((code) => {
+            const isShown = code.dataset.isShown === "true";
+            if (!isShown) {
+              code.textContent = code.dataset.secretVal || "-";
+              code.dataset.isShown = "true";
+              nowShowing = true;
+            } else {
+              code.textContent = code.dataset.secretMask || "-";
+              code.dataset.isShown = "false";
+              nowShowing = false;
+            }
+          });
+
+          btn.innerHTML = nowShowing
+            ? '<i class="fa-regular fa-eye-slash"></i> <span>隐藏明文</span>'
+            : '<i class="fa-regular fa-eye"></i> <span>显示明文</span>';
+        });
+      });
+    }
+
+    function bindQuickCopyButtons() {
+      document.querySelectorAll(".quick-copy-token-btn").forEach((btn) => {
+        btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const accountId = btn.dataset.accountId;
+          const preloadedToken = btn.dataset.token || "";
+          await quickCopyAccountToken(accountId, preloadedToken, btn);
+        });
+      });
+    }
+
+    async function quickCopyAccountToken(accountId, preloadedToken, buttonEl) {
+      let tokenToCopy = preloadedToken;
+
+      if (!tokenToCopy) {
+        if (buttonEl) {
+          buttonEl.disabled = true;
+          buttonEl.innerHTML = '<span class="flex items-center gap-2"><i class="fa-solid fa-spinner animate-spin"></i> <span>提取 Token 中...</span></span>';
+        }
+        try {
+          const adminPassword = els.adminPassword.value;
+          const url = `/api/admin/account-tokens?adminPassword=${encodeURIComponent(adminPassword)}&accountId=${encodeURIComponent(accountId)}&status=active&limit=1`;
+          const res = await requestJson(url);
+          if (res.ok && Array.isArray(res.tokens) && res.tokens.length > 0) {
+            tokenToCopy = res.tokens[0].tokenCode;
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      if (!tokenToCopy) {
+        alert(`账号「${accountId}」当前暂无未使用的 Token，请先点击「追加发码」生成新 Token！`);
+        if (buttonEl) {
+          buttonEl.disabled = false;
+          buttonEl.innerHTML = '<i class="fa-solid fa-circle-plus mr-1.5"></i> 暂无未用 Token，点击立即发码';
+        }
+        return;
+      }
+
+      try {
+        await copyTextToClipboard(tokenToCopy);
+        showAccountToast(`已成功复制账号「${accountId}」的未用 Token：${tokenToCopy}`);
+
+        // 成功动画反馈
+        if (buttonEl) {
+          const origHtml = buttonEl.innerHTML;
+          const origClass = buttonEl.className;
+          buttonEl.className = "quick-copy-token-btn flex w-full items-center justify-between overflow-hidden rounded-xl bg-emerald-600 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-black text-white shadow-lg ring-4 ring-emerald-200 transition-all";
+          buttonEl.innerHTML = `<span class="flex items-center gap-1.5 sm:gap-2 min-w-0"><i class="fa-solid fa-check text-white text-sm sm:text-base shrink-0"></i> <span class="truncate">已复制 ${escapeHtml(tokenToCopy)}</span></span><span class="rounded-lg bg-black/20 px-2 py-0.5 text-xs font-mono font-bold text-white shrink-0 ml-1.5">成功</span>`;
+          
+          // 清空当前已预载的 token，下次点击从后端获取下一个 token
+          buttonEl.dataset.token = "";
+
+          // 同步微调卡片上的剩余数量显示（提升感知即时性）
+          const card = buttonEl.closest("[data-account-card]");
+          if (card) {
+            const badge = card.querySelector(".card-active-token-badge");
+            const countEl = card.querySelector(".card-active-count");
+            const accObj = accounts.find(a => a.accountId === accountId);
+            if (accObj && accObj.activeTokens > 0) {
+              accObj.activeTokens--;
+              if (badge) badge.textContent = `余 ${accObj.activeTokens} 个可用`;
+              if (countEl) countEl.textContent = accObj.activeTokens;
+            }
+          }
+
+          setTimeout(() => {
+            buttonEl.className = origClass;
+            buttonEl.innerHTML = origHtml;
+            buttonEl.disabled = false;
+          }, 1800);
+        }
+      } catch (err) {
+        alert("复制到剪贴板失败，请手动复制：" + tokenToCopy);
+        if (buttonEl) buttonEl.disabled = false;
+      }
+    }
+
+    function showAccountToast(msg) {
+      let toast = document.getElementById("accountToast");
+      if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "accountToast";
+        toast.className = "fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-50 flex items-center gap-2.5 sm:gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/95 backdrop-blur-md px-4 py-3 sm:px-5 sm:py-3.5 text-xs sm:text-sm font-black text-emerald-900 shadow-2xl transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-none max-w-sm sm:max-w-md";
+        document.body.appendChild(toast);
+      }
+      toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i> <span>${escapeHtml(msg)}</span>`;
+      toast.classList.remove("translate-y-2", "opacity-0", "pointer-events-none");
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => {
+        toast.classList.add("translate-y-2", "opacity-0", "pointer-events-none");
+      }, 2800);
+    }
+
+    function bindSecretControls() {
+      document.querySelectorAll("[data-copy]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const text = button.dataset.copy || "";
+          try {
+            await copyTextToClipboard(text);
+            const origHtml = button.innerHTML;
+            button.innerHTML = '<i class="fa-solid fa-check text-emerald-600"></i>';
+            setTimeout(() => { button.innerHTML = origHtml; }, 1200);
+          } catch {}
+        });
+      });
+
+      document.querySelectorAll("[data-toggle-secret]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const secretText = button.parentElement?.querySelector("[data-secret-text]");
+          if (!secretText) return;
+          const isVisible = secretText.dataset.visible === "true";
+          secretText.textContent = isVisible ? (secretText.dataset.secretMask || "") : (secretText.dataset.secretText || "");
+          secretText.dataset.visible = isVisible ? "false" : "true";
+          button.textContent = isVisible ? "查看" : "隐藏";
+        });
+      });
+
+      document.querySelectorAll("[data-copy-secret]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const secret = button.dataset.copySecret || "";
+          const orig = button.textContent;
+          try {
+            await copyTextToClipboard(secret);
+            button.textContent = "已复制";
+            setTimeout(() => { button.textContent = orig; }, 1200);
+          } catch {}
+        });
+      });
+    }
+
+    function openModal(dialogId) {
+      const el = document.getElementById(dialogId);
+      if (el) {
+        el.classList.remove("hidden");
+        el.classList.add("flex");
+      }
+    }
+
+    function closeModal(dialogId) {
+      const el = document.getElementById(dialogId);
+      if (el) {
+        el.classList.add("hidden");
+        el.classList.remove("flex");
+      }
+    }
+
+    function generateRandomPassword() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*";
+      const bytes = crypto.getRandomValues(new Uint8Array(14));
+      return [...bytes].map(b => chars[b % chars.length]).join("");
+    }
+
+    function openRegisterModal() {
+      if (els.registerAccountForm) els.registerAccountForm.reset();
+      if (els.registerErrorBox) {
+        els.registerErrorBox.classList.add("hidden");
+        els.registerErrorBox.textContent = "";
+      }
+      els.regInitialTokens.value = "0";
+      els.regStatus.value = "active";
+      openModal("registerAccountDialog");
+      els.regAccountId.focus();
+    }
+
+    async function registerAccount() {
+      const adminPassword = els.adminPassword.value;
+      const accountId = els.regAccountId.value.trim();
+      const accountPassword = els.regAccountPassword.value.trim();
+      const totpSecret = els.regTotpSecret.value.trim();
+      const gptTotpSecret = els.regGptTotpSecret.value.trim();
+      const initialTokensCount = Number(els.regInitialTokens.value || 0);
+      const status = els.regStatus.value;
+      const note = els.regNote.value.trim();
+
+      if (!accountId) {
+        showRegisterError("请填写账号 ID / 用户名。");
+        els.regAccountId.focus();
+        return;
+      }
+
+      if (!accountPassword) {
+        showRegisterError("请填写账号密码。");
+        els.regAccountPassword.focus();
+        return;
+      }
+
+      if (!totpSecret) {
+        showRegisterError("请填写 Google 2FA Base32 密钥。");
+        els.regTotpSecret.focus();
+        return;
+      }
+
+      els.submitRegisterBtn.disabled = true;
+      els.submitRegisterBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> 注册中...';
+      hideRegisterError();
+
+      try {
+        const result = await requestJson("/api/admin/accounts", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            adminPassword,
+            accountId,
+            accountPassword,
+            totpSecret,
+            gptTotpSecret,
+            initialTokensCount,
+            status,
+            note
+          })
+        });
+
+        if (!result.ok) {
+          if (result.error === "ACCOUNT_EXISTS") {
+            showRegisterError(result.message || "账号已存在，不能重复注册（系统有且仅能有一个同名称账号）。");
+          } else if (Array.isArray(result.details) && result.details.length > 0) {
+            showRegisterError(result.details.map(d => d.message).join("；"));
+          } else {
+            showRegisterError(result.message || "注册失败。");
+          }
+          return;
+        }
+
+        closeModal("registerAccountDialog");
+        showAccountMessage("ok", `账号「${accountId}」注册成功！${result.generatedTokensCount > 0 ? `并已生成 ${result.generatedTokensCount} 个 Token。` : ""}`);
+        await loadAccounts({ silent: true });
+        await loadTokens({ silent: true });
+      } catch (err) {
+        showRegisterError(err.message || "请求服务器失败。");
+      } finally {
+        els.submitRegisterBtn.disabled = false;
+        els.submitRegisterBtn.innerHTML = '<i class="fa-solid fa-check"></i> 确认注册';
+      }
+    }
+
+    function showRegisterError(msg) {
+      if (!els.registerErrorBox) return;
+      els.registerErrorBox.textContent = msg;
+      els.registerErrorBox.classList.remove("hidden");
+    }
+
+    function hideRegisterError() {
+      if (!els.registerErrorBox) return;
+      els.registerErrorBox.classList.add("hidden");
+      els.registerErrorBox.textContent = "";
+    }
+
+    function openEditModal(account) {
+      if (!account) return;
+      els.editAccountId.value = account.accountId;
+      els.editAccountPassword.value = account.accountPassword || "";
+      els.editTotpSecret.value = account.totpSecret || "";
+      els.editGptTotpSecret.value = account.gptTotpSecret || "";
+      els.editClearGptSecret.checked = false;
+      els.editStatus.value = account.status || "active";
+      els.editNote.value = account.note || "";
+      els.editSyncActiveTokens.checked = true;
+
+      if (els.editErrorBox) {
+        els.editErrorBox.classList.add("hidden");
+        els.editErrorBox.textContent = "";
+      }
+
+      openModal("editAccountDialog");
+      els.editAccountPassword.focus();
+    }
+
+    async function saveEditAccount() {
+      const adminPassword = els.adminPassword.value;
+      const accountId = els.editAccountId.value.trim();
+      const accountPassword = els.editAccountPassword.value.trim();
+      const totpSecret = els.editTotpSecret.value.trim();
+      const gptTotpSecret = els.editGptTotpSecret.value.trim();
+      const clearGptTotpSecret = els.editClearGptSecret.checked;
+      const status = els.editStatus.value;
+      const note = els.editNote.value.trim();
+      const syncActiveTokens = els.editSyncActiveTokens.checked;
+
+      els.submitEditBtn.disabled = true;
+      els.submitEditBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> 保存中...';
+      if (els.editErrorBox) els.editErrorBox.classList.add("hidden");
+
+      try {
+        const result = await requestJson("/api/admin/accounts", {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            adminPassword,
+            accountId,
+            accountPassword,
+            totpSecret,
+            gptTotpSecret,
+            clearGptTotpSecret,
+            status,
+            note,
+            syncActiveTokens
+          })
+        });
+
+        if (!result.ok) {
+          if (Array.isArray(result.details) && result.details.length > 0) {
+            showEditError(result.details.map(d => d.message).join("；"));
+          } else {
+            showEditError(result.message || "修改失败。");
+          }
+          return;
+        }
+
+        closeModal("editAccountDialog");
+        showAccountMessage("ok", `账号「${accountId}」修改保存成功。`);
+        await loadAccounts({ silent: true });
+        await loadTokens({ silent: true });
+      } catch (err) {
+        showEditError(err.message || "请求服务器失败。");
+      } finally {
+        els.submitEditBtn.disabled = false;
+        els.submitEditBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> 保存修改';
+      }
+    }
+
+    function showEditError(msg) {
+      if (!els.editErrorBox) return;
+      els.editErrorBox.textContent = msg;
+      els.editErrorBox.classList.remove("hidden");
+    }
+
+    function openQuickGenModal(accountId) {
+      els.quickGenAccountId.textContent = accountId;
+      els.quickGenCount.value = "5";
+      els.quickGenStatus.value = "active";
+      if (els.quickGenResult) els.quickGenResult.classList.add("hidden");
+      if (els.quickGenTokensList) els.quickGenTokensList.innerHTML = "";
+      openModal("accountGenerateDialog");
+    }
+
+    async function submitQuickGenerate() {
+      const adminPassword = els.adminPassword.value;
+      const accountId = els.quickGenAccountId.textContent.trim();
+      const count = Number(els.quickGenCount.value || 1);
+      const status = els.quickGenStatus.value;
+
+      els.submitQuickGenBtn.disabled = true;
+      els.submitQuickGenBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> 发码中...';
+
+      try {
+        const result = await requestJson("/api/admin/account-generate-tokens", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            adminPassword,
+            accountId,
+            count,
+            status
+          })
+        });
+
+        if (!result.ok) {
+          alert(result.message || "生成失败。");
+          return;
+        }
+
+        if (els.quickGenResult && els.quickGenTokensList) {
+          els.quickGenResult.classList.remove("hidden");
+          els.quickGenTokensList.innerHTML = (result.tokens || []).map(t => `<div>${escapeHtml(t.tokenCode)}</div>`).join("");
+        }
+
+        showAccountMessage("ok", `已为账号「${accountId}」成功派发 ${result.generated} 个 Token！`);
+        await loadAccounts({ silent: true });
+        await loadTokens({ silent: true });
+      } catch (err) {
+        alert(err.message || "发码请求失败。");
+      } finally {
+        els.submitQuickGenBtn.disabled = false;
+        els.submitQuickGenBtn.innerHTML = '<i class="fa-solid fa-plus"></i> 立即生成';
+      }
+    }
+
+    async function openAccountTokensModal(accountId) {
+      currentDetailAccountId = accountId;
+      els.detailAccountIdBadge.textContent = accountId;
+      if (els.detailTokenSearch) els.detailTokenSearch.value = "";
+      if (els.detailStatusFilter) els.detailStatusFilter.value = "";
+
+      openModal("accountTokensDialog");
+      await loadAccountTokens(accountId);
+    }
+
+    async function loadAccountTokens(accountId) {
+      const adminPassword = els.adminPassword.value;
+      els.detailTokenRows.innerHTML = `
+        <tr>
+          <td colspan="5" class="px-4 py-8 text-center text-slate-400">
+            <i class="fa-solid fa-spinner animate-spin mr-2"></i> 加载 Token 记录中...
+          </td>
+        </tr>
+      `;
+
+      try {
+        const url = `/api/admin/account-tokens?adminPassword=${encodeURIComponent(adminPassword)}&accountId=${encodeURIComponent(accountId)}`;
+        const result = await requestJson(url);
+
+        if (!result.ok) {
+          els.detailTokenRows.innerHTML = `
+            <tr>
+              <td colspan="5" class="px-4 py-8 text-center text-red-500">
+                ${escapeHtml(result.message || "读取 Token 列表失败")}
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        currentAccountTokens = Array.isArray(result.tokens) ? result.tokens : [];
+
+        // 更新弹窗统计
+        const total = currentAccountTokens.length;
+        const active = currentAccountTokens.filter(t => t.status === "active").length;
+        const used = currentAccountTokens.filter(t => t.status === "used").length;
+        const disabled = currentAccountTokens.filter(t => t.status === "disabled").length;
+
+        if (els.detailStatTotal) els.detailStatTotal.textContent = total;
+        if (els.detailStatActive) els.detailStatActive.textContent = active;
+        if (els.detailStatUsed) els.detailStatUsed.textContent = used;
+        if (els.detailStatDisabled) els.detailStatDisabled.textContent = disabled;
+
+        renderAccountTokens();
+      } catch (err) {
+        els.detailTokenRows.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-red-500">
+              ${escapeHtml(err.message || "读取失败")}
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    function renderAccountTokens() {
+      const query = (els.detailTokenSearch?.value || "").trim().toUpperCase();
+      const statusFilter = els.detailStatusFilter?.value || "";
+
+      const visible = currentAccountTokens.filter((t) => {
+        const matchesQuery = !query || t.tokenCode.includes(query);
+        const matchesStatus = !statusFilter || t.status === statusFilter;
+        return matchesQuery && matchesStatus;
+      });
+
+      if (currentAccountTokens.length === 0) {
+        els.detailTokenRows.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-slate-400">
+              该账号名下暂无 Token，点击右上角「追加发码」生成新 Token
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      if (visible.length === 0) {
+        els.detailTokenRows.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-slate-400">
+              未找到匹配的 Token 记录
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      els.detailTokenRows.innerHTML = visible.map((t) => {
+        const isActive = t.status === "active";
+        const isUsed = t.status === "used";
+        const statusClass = isActive
+          ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+          : isUsed
+            ? "bg-amber-50 text-amber-700 border-amber-100"
+            : "bg-slate-100 text-slate-500 border-slate-200";
+        const statusIcon = isActive ? "fa-circle-check" : isUsed ? "fa-circle-xmark" : "fa-circle-pause";
+        const statusText = isActive ? "未使用 active" : isUsed ? "已使用 used" : "已停用 disabled";
+
+        const usedTimeDisplay = isUsed
+          ? `<span class="font-bold text-amber-800">${escapeHtml(t.usedAt || t.updatedAt || "-")}</span>`
+          : isActive
+            ? `<span class="text-emerald-600 font-semibold">待使用 (未核销)</span>`
+            : `<span class="text-slate-400">已停用</span>`;
+
+        return `
+          <tr class="transition hover:bg-slate-50">
+            <!-- Token 编码 -->
+            <td class="px-4 py-3">
+              <button type="button" class="mono rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 transition hover:border-blue-300 hover:text-blue-700" data-copy="${escapeAttribute(t.tokenCode)}" title="点击复制 Token">
+                ${escapeHtml(t.tokenCode)}
+              </button>
+            </td>
+
+            <!-- 当前状态 -->
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-bold ${statusClass}">
+                <i class="fa-solid ${statusIcon}"></i>
+                ${statusText}
+              </span>
+            </td>
+
+            <!-- 创建时间 -->
+            <td class="mono px-4 py-3 text-xs text-slate-500">
+              ${escapeHtml(t.createdAt || "-")}
+            </td>
+
+            <!-- 使用记录时间 (核销时间) -->
+            <td class="mono px-4 py-3 text-xs">
+              ${usedTimeDisplay}
+            </td>
+
+            <!-- 操作 -->
+            <td class="px-4 py-3 text-right pr-4">
+              ${isActive ? `
+                <button type="button" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600 hover:border-red-300 hover:text-red-700" data-token-action="disable" data-token-code="${escapeAttribute(t.tokenCode)}">
+                  作废/停用
+                </button>
+              ` : t.status === "disabled" ? `
+                <button type="button" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50" data-token-action="enable" data-token-code="${escapeAttribute(t.tokenCode)}">
+                  恢复启用
+                </button>
+              ` : `
+                <span class="text-xs text-slate-300">已核销</span>
+              `}
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      // 绑定复制
+      els.detailTokenRows.querySelectorAll("[data-copy]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const code = btn.dataset.copy;
+          try {
+            await copyTextToClipboard(code);
+            const orig = btn.textContent;
+            btn.textContent = "已复制";
+            setTimeout(() => { btn.textContent = orig; }, 1200);
+          } catch {}
+        });
+      });
+
+      // 绑定状态变更
+      els.detailTokenRows.querySelectorAll("[data-token-action]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const action = btn.dataset.tokenAction;
+          const tokenCode = btn.dataset.tokenCode;
+          const targetStatus = action === "disable" ? "disabled" : "active";
+          await toggleTokenStatus(tokenCode, targetStatus);
+        });
+      });
+    }
+
+    async function toggleTokenStatus(tokenCode, newStatus) {
+      const adminPassword = els.adminPassword.value;
+      try {
+        const result = await requestJson("/api/admin/account-tokens", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            adminPassword,
+            tokenCode,
+            status: newStatus
+          })
+        });
+
+        if (!result.ok) {
+          alert(result.message || "更新状态失败。");
+          return;
+        }
+
+        // 更新本地状态并重绘
+        const t = currentAccountTokens.find(x => x.tokenCode === tokenCode);
+        if (t) t.status = newStatus;
+        renderAccountTokens();
+        loadAccounts({ silent: true });
+        loadTokens({ silent: true });
+      } catch (err) {
+        alert(err.message || "请求失败。");
+      }
+    }
+
+    function openDeleteAccountModal(accountId) {
+      targetDeleteAccountId = accountId;
+      els.deleteTargetAccountId.textContent = accountId;
+      openModal("deleteAccountDialog");
+    }
+
+    async function executeDeleteAccount() {
+      if (!targetDeleteAccountId) return;
+      const adminPassword = els.adminPassword.value;
+      els.confirmDeleteAccountBtn.disabled = true;
+      els.confirmDeleteAccountBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> 删除中...';
+
+      try {
+        const result = await requestJson("/api/admin/accounts", {
+          method: "DELETE",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            adminPassword,
+            accountId: targetDeleteAccountId
+          })
+        });
+
+        if (!result.ok) {
+          alert(result.message || "删除账号失败。");
+          return;
+        }
+
+        closeModal("deleteAccountDialog");
+        showAccountMessage("ok", `账号「${targetDeleteAccountId}」及其所有 Token 已成功删除。`);
+        targetDeleteAccountId = "";
+        await loadAccounts({ silent: true });
+        await loadTokens({ silent: true });
+      } catch (err) {
+        alert(err.message || "删除请求失败。");
+      } finally {
+        els.confirmDeleteAccountBtn.disabled = false;
+        els.confirmDeleteAccountBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i> 确认彻底删除';
+      }
+    }
+
+    function showAccountMessage(type, content) {
+      if (!els.accountMessage) return;
+      const styles = type === "ok"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+        : "border-red-200 bg-red-50 text-red-800";
+      els.accountMessage.className = `mx-5 mt-4 rounded-xl border p-4 text-sm ${styles}`;
+      els.accountMessage.innerHTML = escapeHtml(content);
+      els.accountMessage.classList.remove("hidden");
+      setTimeout(() => {
+        if (els.accountMessage) els.accountMessage.classList.add("hidden");
+      }, 4000);
     }
   </script>
 </body>

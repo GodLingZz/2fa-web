@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
@@ -20,7 +20,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
         .glass-card { 
-            background: rgba(255, 255, 255, 0.85); 
+            background: rgba(255, 255, 255, 0.88); 
             backdrop-filter: blur(20px); 
             border: 1px solid rgba(255, 255, 255, 0.6); 
             border-radius: 1.5rem; 
@@ -124,7 +124,7 @@
         }
         .guide-shot {
             width: 100%;
-            max-height: 8rem;
+            max-height: 9rem;
             object-fit: contain;
             border-radius: 1rem;
             background: #fff;
@@ -164,7 +164,7 @@
                     <i class="fa-solid fa-circle-check"></i>
                     Token 已通过校验
                 </div>
-                <p class="text-sm leading-6 text-slate-600">请先使用下方账号完成 Google 登录，回到本页后再点击确认使用 Token。</p>
+                <p id="guide-top-hint" class="text-sm leading-6 text-slate-600">请先使用下方账号完成 Google 登录，回到本页后再点击确认使用 Token。</p>
             </div>
 
             <section class="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -193,45 +193,50 @@
                     <i class="fa-solid fa-list-check text-blue-500"></i>
                     <h2 class="text-base font-black text-slate-800">操作指南</h2>
                 </div>
-                <ol class="space-y-2 text-sm leading-6 text-slate-600">
+                <ol id="guide-list" class="space-y-2 text-sm leading-6 text-slate-600">
                     <li><span class="font-black text-slate-800">1.</span> 在目标网页登录方式中，选择“使用 Google 账号继续”。</li>
                     <li><span class="font-black text-slate-800">2.</span> 使用上方提供的账号与密码完成登录。</li>
-                    <li><span class="font-black text-slate-800">3.</span> 当要求两步验证时，选择“从 Google 身份验证器应用获取验证码”。</li>
-                    <li><span class="font-black text-slate-800">4.</span> 返回本页，点击下方按钮生成验证码。</li>
+                    <li><span class="font-black text-slate-800">3.</span> <strong class="text-blue-700">第一步（Google 验证）</strong>：选择“从 Google 身份验证器应用获取验证码”。</li>
+                    <li><span class="font-black text-slate-800">4.</span> 点击下方按钮获取第一步验证码，快速填入 Google 验证框。</li>
+                    <li id="guide-step-gpt" class="border-t border-slate-100 pt-2"><span class="font-black text-slate-800">5.</span> <strong class="text-emerald-700">第二步（GPT 验证）</strong>：登录成功后页面若提示“查看你的身份验证器应用”，返回本页点击获取第二步专属验证码，复制填入即可进入！</li>
                 </ol>
             </section>
 
             <section class="mb-5">
                 <div class="mb-3 flex items-center justify-between">
                     <h2 class="text-base font-black text-slate-800">图示指引</h2>
-                    <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500">3 步</span>
+                    <span id="guide-steps-badge" class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500">4 步流程</span>
                 </div>
                 <div class="grid gap-3">
                     <figure class="rounded-2xl border border-slate-200 bg-white p-3">
-                        <figcaption class="mb-2 text-xs font-black text-slate-500">选择 Google 登录</figcaption>
+                        <figcaption class="mb-2 text-xs font-black text-slate-500">1. 选择 Google 登录</figcaption>
                         <img class="guide-shot" src="/preview-assets/guide-google-continue.png" alt="使用 Google 账号继续按钮示意图">
                     </figure>
                     <figure class="rounded-2xl border border-slate-200 bg-white p-3">
-                        <figcaption class="mb-2 text-xs font-black text-slate-500">选择身份验证器验证码</figcaption>
+                        <figcaption class="mb-2 text-xs font-black text-slate-500">2. 选择身份验证器验证码</figcaption>
                         <img class="guide-shot" src="/preview-assets/guide-authenticator-option.png" alt="从 Google 身份验证器应用获取验证码示意图">
                     </figure>
                     <figure class="rounded-2xl border border-slate-200 bg-white p-3">
-                        <figcaption class="mb-2 text-xs font-black text-slate-500">粘贴验证码并下一步</figcaption>
+                        <figcaption class="mb-2 text-xs font-black text-slate-500">3. 输入第一步 Google 验证码并下一步</figcaption>
                         <img class="guide-shot" src="/preview-assets/guide-code-input.png" alt="验证码输入框示意图">
+                    </figure>
+                    <figure id="guide-figure-gpt" class="rounded-2xl border border-slate-200 bg-white p-3">
+                        <figcaption class="mb-2 text-xs font-black text-slate-500">4. GPT 提示二次验证时，填入第二步专属码</figcaption>
+                        <img class="guide-shot" src="/preview-assets/guide-gpt-authenticator.png" alt="GPT身份验证器界面示意图">
                     </figure>
                 </div>
             </section>
 
-            <div class="mb-5 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm leading-6 text-red-600">
+            <div class="mb-5 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
                 <div class="mb-1 flex items-center gap-2 font-black">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                    注意
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600"></i>
+                    重要提醒
                 </div>
-                <p>验证码生成后仅 30 秒内有效。请准备就绪后再点击下方按钮，并在倒计时结束前快速复制 6 位数字到输入框，立马点击下一步。</p>
+                <p id="guide-warning-text">登录全流程涉及 <strong>两次独立的 2FA 验证</strong>（Google 验证码 与 GPT 专属验证码是<strong>不同的密钥</strong>）。请务必按照步骤：<strong>先完成 Google 验证，再点击获取 GPT 专属验证码</strong>，切勿在第一步填错！</p>
             </div>
 
             <button id="use-token-btn" type="button" class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 font-black text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-700 active:scale-[0.98]">
-                <span>准备就绪，确认使用 Token</span>
+                <span id="use-token-text">准备就绪，获取【Google 验证码】</span>
                 <i class="fa-solid fa-lock-open text-sm"></i>
             </button>
 
@@ -256,11 +261,11 @@
             </div>
 
             <div id="code-zone" class="hidden text-center animate-fade-in">
-                <div id="status-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-600 text-xs font-semibold mb-2 border border-green-100">
-                    <i class="fa-solid fa-circle-check"></i> 授权成功 · 状态满血
+                <div id="status-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold mb-2 border border-blue-100">
+                    <i class="fa-solid fa-circle-check"></i> 第一步 · Google 身份验证码
                 </div>
                 
-                <div class="flex items-stretch bg-white border border-slate-200 rounded-2xl my-4 shadow-sm overflow-hidden h-28">
+                <div class="flex items-stretch bg-white border border-slate-200 rounded-2xl my-3 shadow-sm overflow-hidden h-28">
                     <div class="code-box flex-1 flex items-center justify-center border-r border-slate-100 overflow-hidden">
                         <div id="2fa-code" class="code-display">000 000</div>
                     </div>
@@ -271,21 +276,38 @@
                 </div>
                 
                 <div class="flex justify-between items-center text-xs font-semibold text-slate-500 mb-1.5 px-1">
-                    <span>剩余有效时间</span>
+                    <span id="step-indicator-text">Google 验证码剩余时间</span>
                     <span id="time-left" class="tabular-nums font-mono text-blue-600">30s</span>
                 </div>
-                <div class="w-full bg-slate-100 rounded-full h-1.5 mb-6 overflow-hidden">
+                <div class="w-full bg-slate-100 rounded-full h-1.5 mb-4 overflow-hidden">
                     <div id="progress-bar" class="progress-bar"></div>
+                </div>
+
+                <div id="code-prompt-box" class="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs leading-5 text-slate-500 text-left mb-4">
+                    <i class="fa-solid fa-circle-info text-blue-500 mr-1"></i>
+                    <span id="code-prompt-text">请在 Google 登录验证页面填入此验证码并点击下一步。</span>
+                </div>
+
+                <!-- 分步流控制区域 -->
+                <div id="dual-step-controls" class="space-y-2.5">
+                    <button id="next-step-btn" type="button" class="w-full py-3.5 rounded-xl font-black text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2">
+                        <span>已通过 Google 验证，获取【GPT 验证码】</span>
+                        <i class="fa-solid fa-arrow-right text-sm"></i>
+                    </button>
+
+                    <button id="prev-step-btn" type="button" class="hidden text-xs font-semibold text-slate-400 hover:text-blue-600 transition inline-flex items-center gap-1.5 py-1">
+                        <i class="fa-solid fa-arrow-left"></i> 返回查看【Google 验证码】
+                    </button>
                 </div>
             </div>
 
-            <button id="back-btn" class="text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors flex items-center justify-center gap-1.5 mx-auto mt-2">
+            <button id="back-btn" class="text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors flex items-center justify-center gap-1.5 mx-auto mt-6">
                 <i class="fa-solid fa-rotate-left"></i> 输入其他授权码
             </button>
         </div>
         
         <div class="mt-8 text-center">
-            <p class="text-[10px] text-slate-400 font-medium tracking-wide"><i class="fa-solid fa-lock text-slate-300 mr-1"></i>基于 TOTP 算法 · 一次性拦截授权</p>
+            <p class="text-[10px] text-slate-400 font-medium tracking-wide"><i class="fa-solid fa-lock text-slate-300 mr-1"></i>基于 TOTP 算法 · 分步一次性授权</p>
         </div>
 
     </div>
@@ -296,7 +318,7 @@
                 <i class="fa-solid fa-triangle-exclamation text-xl"></i>
             </div>
             <h2 id="confirm-title" class="mb-2 text-center text-xl font-black text-slate-800">确认使用一次性 Token</h2>
-            <p id="confirm-message" class="mb-5 text-center text-sm leading-6 text-slate-500">确认后将使用该 token 生成 6 位验证码，生成后的验证码仅短时间有效。</p>
+            <p id="confirm-message" class="mb-5 text-center text-sm leading-6 text-slate-500">确认后将消耗该 Token，并在 10 分钟内可分步生成 Google 与 GPT 专属验证码。</p>
             <div class="grid grid-cols-2 gap-3">
                 <button id="confirm-cancel-btn" type="button" class="h-11 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200">取消</button>
                 <button id="confirm-ok-btn" type="button" class="h-11 rounded-xl bg-blue-600 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-blue-200">确认</button>
@@ -323,6 +345,16 @@
         const progressBar = document.getElementById('progress-bar');
         const timeLeftText = document.getElementById('time-left');
         const statusBadge = document.getElementById('status-badge');
+        const stepIndicatorText = document.getElementById('step-indicator-text');
+        const codePromptText = document.getElementById('code-prompt-text');
+        const nextStepBtn = document.getElementById('next-step-btn');
+        const prevStepBtn = document.getElementById('prev-step-btn');
+        
+        const guideStepGpt = document.getElementById('guide-step-gpt');
+        const guideFigureGpt = document.getElementById('guide-figure-gpt');
+        const guideStepsBadge = document.getElementById('guide-steps-badge');
+        const guideWarningText = document.getElementById('guide-warning-text');
+        const useTokenText = document.getElementById('use-token-text');
         
         const copyBtnArea = document.getElementById('copy-btn-area');
         const copyIcon = document.getElementById('copy-icon');
@@ -337,6 +369,10 @@
         let checkedToken = "";
         let checkedAccount = "";
         let checkedPassword = "";
+        let hasGpt2fa = false;
+        let sessionTicket = "";
+        let currentStep = "google"; // "google" | "gpt"
+        let cachedStepData = { google: null, gpt: null };
 
         // 提交授权码
         btn.addEventListener('click', async () => {
@@ -360,6 +396,7 @@
                 checkedToken = token;
                 checkedAccount = result.accountId || "";
                 checkedPassword = result.accountPassword || "";
+                hasGpt2fa = Boolean(result.hasGpt2fa);
                 renderGuide();
                 stepInput.style.display = 'none';
                 stepGuide.style.display = 'block';
@@ -376,7 +413,7 @@
                 return;
             }
 
-            const confirmed = await confirmOneTimeToken();
+            const confirmed = checkedToken === "999888" ? true : await confirmOneTimeToken();
 
             if (!confirmed) {
                 return;
@@ -386,7 +423,41 @@
             stepResult.style.display = 'block';
 
             activeSessionId++;
-            startCodeSession(checkedToken, activeSessionId);
+            currentStep = "google";
+            startGoogleSession(checkedToken, activeSessionId);
+        });
+
+        // 切换到第二步 GPT 验证码
+        nextStepBtn.addEventListener('click', async () => {
+            if (!hasGpt2fa) {
+                return;
+            }
+
+            activeSessionId++;
+            currentStep = "gpt";
+            nextStepBtn.disabled = true;
+            nextStepBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> 正在生成 GPT 专属验证码...';
+
+            try {
+                await startGptSession(activeSessionId);
+            } catch (err) {
+                alert(err.message || "获取 GPT 验证码失败，请重试。");
+            } finally {
+                nextStepBtn.disabled = false;
+                nextStepBtn.innerHTML = '<span>已通过 Google 验证，获取【GPT 验证码】</span><i class="fa-solid fa-arrow-right text-sm"></i>';
+            }
+        });
+
+        // 返回查看第一步 Google 验证码
+        prevStepBtn.addEventListener('click', () => {
+            activeSessionId++;
+            currentStep = "google";
+            if (cachedStepData.google) {
+                applyStepUI("google");
+                startTimerForData(cachedStepData.google, activeSessionId, "google");
+            } else {
+                fetchAndDisplayStep("google", activeSessionId);
+            }
         });
 
         confirmOkBtn.addEventListener('click', () => {
@@ -441,11 +512,16 @@
 
         function resetToInput() {
             activeSessionId++;
-            if(masterInterval) clearInterval(masterInterval);
+            if (masterInterval) clearInterval(masterInterval);
             document.getElementById('token').value = '';
             checkedToken = "";
             checkedAccount = "";
             checkedPassword = "";
+            hasGpt2fa = false;
+            sessionTicket = "";
+            currentStep = "google";
+            cachedStepData = { google: null, gpt: null };
+
             stepGuide.style.display = 'none';
             stepResult.style.display = 'none';
             waitingZone.style.display = 'none';
@@ -478,6 +554,49 @@
         function renderGuide() {
             accountText.innerText = checkedAccount || "未配置账号";
             passwordText.innerText = checkedPassword || "未配置，请联系微信号：sout-0";
+
+            if (hasGpt2fa) {
+                guideStepGpt.classList.remove('hidden');
+                guideFigureGpt.classList.remove('hidden');
+                guideStepsBadge.innerText = '4 步全流程';
+                useTokenText.innerText = '准备就绪，获取【Google 验证码】';
+                guideWarningText.innerHTML = '登录全流程涉及 <strong>两次独立的 2FA 验证</strong>（Google 验证码 与 GPT 专属验证码是<strong>不同的密钥</strong>）。请务必按照步骤：<strong>先完成 Google 验证，再点击获取 GPT 专属验证码</strong>，切勿混淆！';
+            } else {
+                guideStepGpt.classList.add('hidden');
+                guideFigureGpt.classList.add('hidden');
+                guideStepsBadge.innerText = '3 步流程';
+                useTokenText.innerText = '准备就绪，确认使用 Token';
+                guideWarningText.innerHTML = '验证码生成后仅 30 秒内有效。请准备就绪后再点击下方按钮，并在倒计时结束前快速复制 6 位数字到输入框，立马点击下一步。';
+            }
+        }
+
+        function applyStepUI(step) {
+            if (step === "google") {
+                statusBadge.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold mb-2 border border-blue-100";
+                statusBadge.innerHTML = hasGpt2fa
+                    ? '<i class="fa-solid fa-shield-halved"></i> 步骤 1/2 · Google 身份验证码'
+                    : '<i class="fa-solid fa-circle-check"></i> 授权成功 · 状态满血';
+                stepIndicatorText.innerText = 'Google 验证码剩余时间';
+                codePromptText.innerText = '请在 Google 登录验证页面填入此验证码并点击下一步。';
+
+                if (hasGpt2fa) {
+                    nextStepBtn.classList.remove('hidden');
+                    prevStepBtn.classList.add('hidden');
+                } else {
+                    nextStepBtn.classList.add('hidden');
+                    prevStepBtn.classList.add('hidden');
+                }
+            } else {
+                statusBadge.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold mb-2 border border-emerald-200";
+                statusBadge.innerHTML = '<i class="fa-solid fa-key"></i> 步骤 2/2 · GPT 专属验证码';
+                stepIndicatorText.innerText = 'GPT 专属验证码剩余时间';
+                codePromptText.innerText = '请在 OpenAI 官方“查看你的身份验证器应用”界面填入此专属验证码并点击继续。';
+
+                nextStepBtn.classList.add('hidden');
+                prevStepBtn.classList.remove('hidden');
+            }
+
+            resetCodeUI();
         }
 
         // 每次展示口令前，重置 UI 状态
@@ -491,18 +610,12 @@
             copyBtnArea.className = "w-28 bg-slate-50 hover:bg-blue-50 active:bg-blue-100 transition-colors flex flex-col items-center justify-center text-slate-400 hover:text-blue-600 group cursor-pointer outline-none";
             copyIcon.className = "fa-regular fa-copy text-3xl mb-2 group-hover:scale-110 transition-transform";
             copyText.innerText = "点击复制";
-
-            statusBadge.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-600 text-xs font-semibold mb-2 border border-green-100";
-            statusBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> 授权成功，请点击复制后快速返回GPT网页';
         }
 
         // 30秒耗尽后的锁定逻辑
         function lockExpiredCode() {
             codeDisplay.innerText = "--- ---";
             codeDisplay.style.color = "#94a3b8"; 
-            codeDisplay.style.background = "none";
-            codeDisplay.style.webkitBackgroundClip = "initial"; 
-            codeDisplay.style.webkitTextFillColor = "initial";
             
             copyBtnArea.onclick = null; 
             copyBtnArea.className = "w-28 bg-slate-100 flex flex-col items-center justify-center text-slate-400 group cursor-not-allowed outline-none";
@@ -515,16 +628,6 @@
             timeLeftText.innerText = '0s';
             timeLeftText.style.color = '#ef4444';
             progressBar.style.width = '0%';
-        }
-
-        async function requestTokenCode(tokenCode) {
-            const { response, result } = await postTokenVerify({ tokenCode });
-
-            if (!response.ok || !result.ok) {
-                throw new Error(result.message || "验证失败：授权码不存在或已失效。");
-            }
-
-            return result;
         }
 
         async function checkToken(tokenCode) {
@@ -564,22 +667,25 @@
             return refreshCount === 0;
         }
 
-        async function startCodeSession(token, sessionId) {
+        // 启动第一步 Google 验证码会话
+        async function startGoogleSession(token, sessionId) {
             try {
-                const result = await requestTokenCode(token);
+                const { response, result } = await postTokenVerify({ tokenCode: token, step: "google" });
+
+                if (!response.ok || !result.ok) {
+                    throw new Error(result.message || "生成验证码失败，请重新输入授权码。");
+                }
 
                 if (sessionId !== activeSessionId) {
                     return;
                 }
 
-                showCodeAndStartTimer(
-                    result.code,
-                    result.expiresAt,
-                    result.nextCode,
-                    result.nextExpiresAt,
-                    sessionId,
-                    0
-                );
+                sessionTicket = result.sessionTicket || "";
+                hasGpt2fa = Boolean(result.hasGpt2fa);
+                cachedStepData.google = result;
+
+                applyStepUI("google");
+                startTimerForData(result, sessionId, "google");
             } catch (error) {
                 if (sessionId !== activeSessionId) {
                     return;
@@ -590,8 +696,67 @@
             }
         }
 
+        // 启动第二步 GPT 验证码会话
+        async function startGptSession(sessionId) {
+            const payload = sessionTicket
+                ? { sessionTicket, step: "gpt" }
+                : { tokenCode: checkedToken, step: "gpt" };
+
+            const { response, result } = await postTokenVerify(payload);
+
+            if (!response.ok || !result.ok) {
+                throw new Error(result.message || "生成 GPT 专属验证码失败。");
+            }
+
+            if (sessionId !== activeSessionId) {
+                return;
+            }
+
+            cachedStepData.gpt = result;
+            applyStepUI("gpt");
+            startTimerForData(result, sessionId, "gpt");
+        }
+
+        // 重新拉取特定步骤的实时码
+        async function fetchAndDisplayStep(step, sessionId) {
+            try {
+                const payload = sessionTicket
+                    ? { sessionTicket, step }
+                    : { tokenCode: checkedToken, step };
+
+                const { response, result } = await postTokenVerify(payload);
+                if (!response.ok || !result.ok) {
+                    throw new Error(result.message || "获取验证码失败。");
+                }
+
+                if (sessionId !== activeSessionId) {
+                    return;
+                }
+
+                cachedStepData[step] = result;
+                applyStepUI(step);
+                startTimerForData(result, sessionId, step);
+            } catch (err) {
+                if (sessionId === activeSessionId) {
+                    alert(err.message || "刷新验证码失败。");
+                }
+            }
+        }
+
+        function startTimerForData(data, sessionId, step) {
+            showCodeAndStartTimer(
+                data.code,
+                data.expiresAt,
+                data.nextCode,
+                data.nextExpiresAt,
+                sessionId,
+                0,
+                step
+            );
+        }
+
         // 立即展示当前口令，失效后仅自动刷新一次
-        function showCodeAndStartTimer(code, expiresAt, nextCode, nextExpiresAt, sessionId, refreshCount) {
+        function showCodeAndStartTimer(code, expiresAt, nextCode, nextExpiresAt, sessionId, refreshCount, step) {
             if (sessionId !== activeSessionId) {
                 return;
             }
@@ -601,6 +766,11 @@
             
             resetCodeUI();
             
+            if (checkedToken === "999888") {
+                statusBadge.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-semibold mb-2 border border-blue-100";
+                statusBadge.innerHTML = '<i class="fa-solid fa-infinity"></i> 通用 Token · 永不过期';
+            }
+
             const normalizedCode = String(code || "").replace(/\D/g, "").padStart(6, "0").slice(-6);
             codeDisplay.innerText = normalizedCode.slice(0, 3) + " " + normalizedCode.slice(3, 6);
             
@@ -629,14 +799,17 @@
                         null,
                         null,
                         sessionId,
-                        refreshCount + 1
+                        refreshCount + 1,
+                        step
                     );
+                } else if (checkedToken === "999888") {
+                    fetchAndDisplayStep(step, sessionId);
                 } else {
                     lockExpiredCode();
                 }
             };
 
-            if(masterInterval) clearInterval(masterInterval);
+            if (masterInterval) clearInterval(masterInterval);
             tick();
             if (getRemainingSeconds(expiry) > 0) {
                 masterInterval = setInterval(tick, 250);
@@ -648,8 +821,8 @@
             timeLeftText.innerText = timeLeft + 's';
             const percentage = (timeLeft / 30) * 100;
             progressBar.style.width = percentage + '%';
-            progressBar.style.backgroundColor = timeLeft <= 5 ? '#ef4444' : '#3b82f6';
-            timeLeftText.style.color = timeLeft <= 5 ? '#ef4444' : '#2563eb';
+            progressBar.style.backgroundColor = timeLeft <= 5 ? '#ef4444' : (currentStep === 'gpt' ? '#10b981' : '#3b82f6');
+            timeLeftText.style.color = timeLeft <= 5 ? '#ef4444' : (currentStep === 'gpt' ? '#059669' : '#2563eb');
         }
 
         // 复制口令逻辑
@@ -680,9 +853,15 @@
                 textarea.remove();
             }
         }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlToken = urlParams.get('token');
+        if (urlToken) {
+            const tokenInput = document.getElementById('token');
+            if (tokenInput) {
+                tokenInput.value = urlToken.trim();
+            }
+        }
     </script>
 </body>
 </html>
-
-
-

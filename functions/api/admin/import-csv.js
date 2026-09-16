@@ -34,23 +34,61 @@ export async function onRequest(context) {
       encryptedRows.push({
         ...row,
         encryptedAccountPassword: await encryptAccountPassword(row.accountPassword, context.env),
-        encryptedSecret: await encryptSecret(row.totpSecret, context.env)
+        encryptedSecret: await encryptSecret(row.totpSecret, context.env),
+        encryptedGptSecret: row.gptTotpSecret ? await encryptSecret(row.gptTotpSecret, context.env) : null
       });
     }
 
-    const statements = encryptedRows.map((row) => {
+    const seenAccounts = new Map();
+    for (const row of encryptedRows) {
+      if (!seenAccounts.has(row.accountId)) {
+        seenAccounts.set(row.accountId, row);
+      }
+    }
+
+    const accountStatements = [...seenAccounts.values()].map((row) => {
+      return context.env.DB.prepare(
+        `INSERT OR IGNORE INTO accounts (
+          account_id,
+          account_password_encrypted,
+          totp_secret_encrypted,
+          gpt_totp_secret_encrypted,
+          status,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+      ).bind(
+        row.accountId,
+        row.encryptedAccountPassword,
+        row.encryptedSecret,
+        row.encryptedGptSecret,
+        row.status
+      );
+    });
+
+    const tokenStatements = encryptedRows.map((row) => {
       return context.env.DB.prepare(
         `INSERT INTO tokens (
           token_code,
           account_id,
           account_password_encrypted,
           totp_secret_encrypted,
+          gpt_totp_secret_encrypted,
           status,
           created_at,
           updated_at
-        ) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
-      ).bind(row.tokenCode, row.accountId, row.encryptedAccountPassword, row.encryptedSecret, row.status);
+        ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+      ).bind(
+        row.tokenCode,
+        row.accountId,
+        row.encryptedAccountPassword,
+        row.encryptedSecret,
+        row.encryptedGptSecret,
+        row.status
+      );
     });
+
+    const statements = [...accountStatements, ...tokenStatements];
 
     if (statements.length > 0) {
       await context.env.DB.batch(statements);
@@ -64,7 +102,8 @@ export async function onRequest(context) {
         tokenCode: row.tokenCode,
         accountId: row.accountId,
         status: row.status,
-        generated: row.generated
+        generated: row.generated,
+        hasGpt2fa: Boolean(row.gptTotpSecret)
       }))
     });
   } catch (err) {
@@ -104,8 +143,9 @@ async function verifyAdminPassword(adminPassword, env) {
   }
 
   const digest = await sha256Hex(adminPassword);
+  const configuredHash = (env.ADMIN_PASSWORD_HASH || "").trim().toLowerCase();
 
-  if (!constantTimeEqual(digest, env.ADMIN_PASSWORD_HASH.toLowerCase())) {
+  if (!constantTimeEqual(digest, configuredHash)) {
     return error("UNAUTHORIZED", "管理员密码错误", 401);
   }
 
@@ -126,7 +166,6 @@ function constantTimeEqual(left, right) {
   }
 
   let result = 0;
-
   for (let i = 0; i < left.length; i += 1) {
     result |= left.charCodeAt(i) ^ right.charCodeAt(i);
   }
@@ -157,11 +196,12 @@ async function validateCsv(csv, db) {
   }
 
   const headers = rows[0].fields.map((field) => field.trim().toLowerCase());
-    const indexes = {
+  const indexes = {
     tokenCode: headers.indexOf("token_code"),
     accountId: headers.indexOf("account_id"),
     accountPassword: headers.indexOf("account_password"),
     totpSecret: headers.indexOf("totp_secret"),
+    gptTotpSecret: headers.indexOf("gpt_totp_secret"),
     status: headers.indexOf("status")
   };
 
@@ -188,10 +228,12 @@ async function validateCsv(csv, db) {
     const accountId = readField(row.fields, indexes.accountId).trim();
     const accountPassword = readField(row.fields, indexes.accountPassword).trim();
     const rawSecret = readField(row.fields, indexes.totpSecret).trim();
+    const rawGptSecret = indexes.gptTotpSecret === -1 ? "" : readField(row.fields, indexes.gptTotpSecret).trim();
     const rawStatus = indexes.status === -1 ? "" : readField(row.fields, indexes.status).trim();
     const rawToken = indexes.tokenCode === -1 ? "" : readField(row.fields, indexes.tokenCode).trim();
     const status = rawStatus ? rawStatus.toLowerCase() : "active";
     const totpSecret = rawSecret.replace(/\s+/g, "").toUpperCase();
+    const gptTotpSecret = rawGptSecret.replace(/\s+/g, "").toUpperCase();
     let tokenCode = rawToken.toUpperCase();
     let generated = false;
 
@@ -204,9 +246,13 @@ async function validateCsv(csv, db) {
     }
 
     if (!rawSecret) {
-      details.push({ row: row.row, field: "totp_secret", message: "请填写 Base32 密钥" });
+      details.push({ row: row.row, field: "totp_secret", message: "请填写 Google 2FA Base32 密钥" });
     } else if (!isValidBase32(totpSecret)) {
-      details.push({ row: row.row, field: "totp_secret", message: "Base32 密钥格式错误" });
+      details.push({ row: row.row, field: "totp_secret", message: "Google 2FA Base32 密钥格式错误" });
+    }
+
+    if (gptTotpSecret && !isValidBase32(gptTotpSecret)) {
+      details.push({ row: row.row, field: "gpt_totp_secret", message: "GPT 2FA Base32 密钥格式错误" });
     }
 
     if (!VALID_STATUSES.has(status)) {
@@ -238,6 +284,7 @@ async function validateCsv(csv, db) {
       accountId,
       accountPassword,
       totpSecret,
+      gptTotpSecret,
       status,
       generated
     });

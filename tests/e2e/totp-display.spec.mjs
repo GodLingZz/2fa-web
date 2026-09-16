@@ -34,7 +34,8 @@ test("immediately shows the first code, refreshes once, then expires", async ({ 
     });
   });
 
-  await page.goto("http://127.0.0.1:8788/2fa-verify");
+  const port = process.env.PORT || 8789;
+  await page.goto(`http://127.0.0.1:${port}/2fa-verify`);
   await expect(page.locator("#token")).toHaveAttribute("placeholder", "输入Token：TK-XXXX");
   await page.locator("#token").fill("TK-PLAY-TEST-0001");
   await page.locator("#submit-btn").click();

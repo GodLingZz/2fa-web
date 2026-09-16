@@ -15,6 +15,7 @@ export async function onRequest(context) {
       `SELECT
         account_id,
         token_code,
+        gpt_totp_secret_encrypted,
         status,
         created_at
       FROM tokens
@@ -23,10 +24,11 @@ export async function onRequest(context) {
     ).all();
 
     const rows = [
-      ["account_id", "token_code", "status", "created_at"],
+      ["account_id", "token_code", "has_gpt_2fa", "status", "created_at"],
       ...(result.results || []).map((row) => [
         row.account_id,
         row.token_code,
+        row.gpt_totp_secret_encrypted ? "yes" : "no",
         row.status,
         row.created_at
       ])
@@ -265,18 +267,14 @@ function crc32(bytes) {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), {
+function errorJson(errorCode, message, status = 400, extra = {}) {
+  return new Response(JSON.stringify({ ok: false, error: errorCode, message, ...extra }), {
     status,
     headers: {
       "content-type": "application/json; charset=utf-8",
       "cache-control": "no-store"
     }
   });
-}
-
-function errorJson(errorCode, message, status = 400, extra = {}) {
-  return json({ ok: false, error: errorCode, message, ...extra }, status);
 }
 
 async function verifyAdminPassword(adminPassword, env) {
@@ -289,8 +287,9 @@ async function verifyAdminPassword(adminPassword, env) {
   }
 
   const digest = await sha256Hex(adminPassword);
+  const configuredHash = (env.ADMIN_PASSWORD_HASH || "").trim().toLowerCase();
 
-  if (!constantTimeEqual(digest, env.ADMIN_PASSWORD_HASH.toLowerCase())) {
+  if (!constantTimeEqual(digest, configuredHash)) {
     return errorJson("UNAUTHORIZED", "管理员密码错误", 401);
   }
 
@@ -311,7 +310,6 @@ function constantTimeEqual(left, right) {
   }
 
   let result = 0;
-
   for (let i = 0; i < left.length; i += 1) {
     result |= left.charCodeAt(i) ^ right.charCodeAt(i);
   }

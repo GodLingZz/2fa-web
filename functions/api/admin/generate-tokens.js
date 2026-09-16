@@ -27,6 +27,9 @@ export async function onRequest(context) {
     }
 
     const encryptedSecret = await encryptSecret(validation.totpSecret, context.env);
+    const encryptedGptSecret = validation.gptTotpSecret
+      ? await encryptSecret(validation.gptTotpSecret, context.env)
+      : null;
     const encryptedAccountPassword = await encryptSecret(validation.accountPassword, context.env);
     const generatedTokens = [];
     const seenTokens = new Set();
@@ -35,19 +38,46 @@ export async function onRequest(context) {
       generatedTokens.push(await generateUniqueToken(context.env.DB, seenTokens));
     }
 
-    const statements = generatedTokens.map((tokenCode) => {
-      return context.env.DB.prepare(
-        `INSERT INTO tokens (
-          token_code,
+    const statements = [
+      context.env.DB.prepare(
+        `INSERT OR IGNORE INTO accounts (
           account_id,
           account_password_encrypted,
           totp_secret_encrypted,
+          gpt_totp_secret_encrypted,
           status,
           created_at,
           updated_at
         ) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
-      ).bind(tokenCode, validation.accountId, encryptedAccountPassword, encryptedSecret, validation.status);
-    });
+      ).bind(
+        validation.accountId,
+        encryptedAccountPassword,
+        encryptedSecret,
+        encryptedGptSecret,
+        validation.status
+      ),
+      ...generatedTokens.map((tokenCode) => {
+        return context.env.DB.prepare(
+          `INSERT INTO tokens (
+            token_code,
+            account_id,
+            account_password_encrypted,
+            totp_secret_encrypted,
+            gpt_totp_secret_encrypted,
+            status,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+        ).bind(
+          tokenCode,
+          validation.accountId,
+          encryptedAccountPassword,
+          encryptedSecret,
+          encryptedGptSecret,
+          validation.status
+        );
+      })
+    ];
 
     await context.env.DB.batch(statements);
 
@@ -57,7 +87,8 @@ export async function onRequest(context) {
       tokens: generatedTokens.map((tokenCode) => ({
         tokenCode,
         accountId: validation.accountId,
-        status: validation.status
+        status: validation.status,
+        hasGpt2fa: Boolean(validation.gptTotpSecret)
       }))
     });
   } catch {
@@ -79,6 +110,8 @@ function validateInput(body) {
   const accountPassword = typeof body.accountPassword === "string" ? body.accountPassword.trim() : "";
   const rawSecret = typeof body.totpSecret === "string" ? body.totpSecret.trim() : "";
   const totpSecret = rawSecret.replace(/\s+/g, "").toUpperCase();
+  const rawGptSecret = typeof body.gptTotpSecret === "string" ? body.gptTotpSecret.trim() : "";
+  const gptTotpSecret = rawGptSecret.replace(/\s+/g, "").toUpperCase();
   const status = typeof body.status === "string" && body.status.trim()
     ? body.status.trim().toLowerCase()
     : "active";
@@ -93,9 +126,13 @@ function validateInput(body) {
   }
 
   if (!rawSecret) {
-    details.push({ field: "totp_secret", message: "请填写 Base32 密钥" });
+    details.push({ field: "totp_secret", message: "请填写 Google 2FA Base32 密钥" });
   } else if (!isValidBase32(totpSecret)) {
-    details.push({ field: "totp_secret", message: "Base32 密钥格式错误" });
+    details.push({ field: "totp_secret", message: "Google 2FA Base32 密钥格式错误" });
+  }
+
+  if (gptTotpSecret && !isValidBase32(gptTotpSecret)) {
+    details.push({ field: "gpt_totp_secret", message: "GPT 2FA Base32 密钥格式错误" });
   }
 
   if (!Number.isInteger(count) || count < MIN_COUNT || count > MAX_COUNT) {
@@ -110,7 +147,7 @@ function validateInput(body) {
     return { ok: false, details };
   }
 
-  return { ok: true, accountId, accountPassword, totpSecret, count, status };
+  return { ok: true, accountId, accountPassword, totpSecret, gptTotpSecret, count, status };
 }
 
 function isValidBase32(value) {
@@ -227,8 +264,9 @@ async function verifyAdminPassword(adminPassword, env) {
   }
 
   const digest = await sha256Hex(adminPassword);
+  const configuredHash = (env.ADMIN_PASSWORD_HASH || "").trim().toLowerCase();
 
-  if (!constantTimeEqual(digest, env.ADMIN_PASSWORD_HASH.toLowerCase())) {
+  if (!constantTimeEqual(digest, configuredHash)) {
     return error("UNAUTHORIZED", "管理员密码错误", 401);
   }
 
@@ -249,7 +287,6 @@ function constantTimeEqual(left, right) {
   }
 
   let result = 0;
-
   for (let i = 0; i < left.length; i += 1) {
     result |= left.charCodeAt(i) ^ right.charCodeAt(i);
   }

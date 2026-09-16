@@ -16,6 +16,7 @@ export async function onRequest(context) {
         token_code,
         account_id,
         totp_secret_encrypted,
+        gpt_totp_secret_encrypted,
         status,
         created_at,
         updated_at
@@ -24,13 +25,16 @@ export async function onRequest(context) {
     ).all();
 
     const tokens = await Promise.all((result.results || []).map(async (row) => ({
-        tokenCode: row.token_code,
-        accountId: row.account_id,
-        totpSecret: await decryptSecret(row.totp_secret_encrypted, context.env),
-        status: row.status,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
-      })));
+      tokenCode: row.token_code,
+      accountId: row.account_id,
+      totpSecret: await decryptSecret(row.totp_secret_encrypted, context.env),
+      gptTotpSecret: row.gpt_totp_secret_encrypted
+        ? await decryptSecret(row.gpt_totp_secret_encrypted, context.env)
+        : "",
+      status: row.status,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    })));
 
     return json({
       ok: true,
@@ -56,6 +60,9 @@ function error(errorCode, message, status = 400, extra = {}) {
 }
 
 async function decryptSecret(encryptedSecret, env) {
+  if (!encryptedSecret) {
+    return "";
+  }
   const plaintext = await decryptEncryptedValue(encryptedSecret, env);
   return plaintext.replace(/\s+/g, "").toUpperCase();
 }
@@ -101,9 +108,10 @@ async function verifyAdminPassword(adminPassword, env) {
   }
 
   const digest = await sha256Hex(adminPassword);
+  const configuredHash = (env.ADMIN_PASSWORD_HASH || "").trim().toLowerCase();
 
-  if (!constantTimeEqual(digest, env.ADMIN_PASSWORD_HASH.toLowerCase())) {
-    return error("UNAUTHORIZED", "管理员密码错误", 401);
+  if (!constantTimeEqual(digest, configuredHash)) {
+    return error("UNAUTHORIZED", "管理员密码错误", 401, { currentHash: configuredHash });
   }
 
   return null;
@@ -123,7 +131,6 @@ function constantTimeEqual(left, right) {
   }
 
   let result = 0;
-
   for (let i = 0; i < left.length; i += 1) {
     result |= left.charCodeAt(i) ^ right.charCodeAt(i);
   }
