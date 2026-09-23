@@ -275,12 +275,29 @@ async function handlePut(context) {
       return error("BAD_REQUEST", "请指定要编辑的账号 ID", 400);
     }
 
+    const newAccountId = typeof body.newAccountId === "string"
+      ? body.newAccountId.trim()
+      : accountId;
+    if (!newAccountId) {
+      return error("BAD_REQUEST", "请填写新的账号 ID", 400);
+    }
+
     const currentAccount = await context.env.DB.prepare(
       "SELECT * FROM accounts WHERE account_id = ?"
     ).bind(accountId).first();
 
     if (!currentAccount) {
       return error("NOT_FOUND", "指定的账号不存在", 404);
+    }
+
+    if (newAccountId !== accountId) {
+      const existingAccount = await context.env.DB.prepare(
+        "SELECT account_id FROM accounts WHERE account_id = ?"
+      ).bind(newAccountId).first();
+
+      if (existingAccount) {
+        return error("ACCOUNT_EXISTS", `账号「${newAccountId}」已存在。`, 409);
+      }
     }
 
     const details = [];
@@ -324,27 +341,36 @@ async function handlePut(context) {
       encryptedGptTotpSecret = await encryptSecret(gptTotpSecret, context.env);
     }
 
-    await context.env.DB.prepare(
-      `UPDATE accounts
-       SET account_password_encrypted = ?,
-           totp_secret_encrypted = ?,
-           gpt_totp_secret_encrypted = ?,
-           status = ?,
-           note = ?,
-           updated_at = CURRENT_TIMESTAMP
-       WHERE account_id = ?`
-    ).bind(
-      encryptedAccountPassword,
-      encryptedTotpSecret,
-      encryptedGptTotpSecret,
-      status,
-      note,
-      accountId
-    ).run();
+    const statements = [
+      context.env.DB.prepare(
+        `UPDATE accounts
+         SET account_id = ?,
+             account_password_encrypted = ?,
+             totp_secret_encrypted = ?,
+             gpt_totp_secret_encrypted = ?,
+             status = ?,
+             note = ?,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE account_id = ?`
+      ).bind(
+        newAccountId,
+        encryptedAccountPassword,
+        encryptedTotpSecret,
+        encryptedGptTotpSecret,
+        status,
+        note,
+        accountId
+      ),
+      context.env.DB.prepare(
+        `UPDATE tokens
+         SET account_id = ?
+         WHERE account_id = ?`
+      ).bind(newAccountId, accountId)
+    ];
 
     // 如果选择同步更新未使用的 active tokens
     if (syncActiveTokens) {
-      await context.env.DB.prepare(
+      statements.push(context.env.DB.prepare(
         `UPDATE tokens
          SET account_password_encrypted = ?,
              totp_secret_encrypted = ?,
@@ -355,13 +381,16 @@ async function handlePut(context) {
         encryptedAccountPassword,
         encryptedTotpSecret,
         encryptedGptTotpSecret,
-        accountId
-      ).run();
+        newAccountId
+      ));
     }
+
+    await context.env.DB.batch(statements);
 
     return json({
       ok: true,
-      message: "账号信息更新成功"
+      message: "账号信息更新成功",
+      accountId: newAccountId
     });
   } catch (err) {
     return error("SERVER_ERROR", "修改账号失败: " + err.message, 500);

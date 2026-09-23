@@ -702,7 +702,7 @@
             <i class="fa-solid fa-user-pen text-lg sm:text-xl"></i>
           </div>
           <h2 class="text-lg sm:text-xl font-black text-slate-900">编辑账号信息</h2>
-          <p class="mt-1 text-xs sm:text-sm text-slate-500">账号 ID 固定唯一，可修改密码、2FA 密钥与状态。</p>
+          <p class="mt-1 text-xs sm:text-sm text-slate-500">可修改账号 ID、密码、2FA 密钥与状态；账号 ID 必须唯一。</p>
         </div>
         <button type="button" class="close-modal-btn inline-flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-red-200 hover:text-red-600 focus-ring" data-close-modal="editAccountDialog">
           <i class="fa-solid fa-xmark"></i>
@@ -712,7 +712,7 @@
       <form id="editAccountForm" class="space-y-4">
         <label class="block">
           <span class="mb-1.5 block text-sm font-bold text-slate-700">账号 ID</span>
-          <input id="editAccountId" type="text" readonly class="mono h-11 w-full rounded-xl border border-slate-200 bg-slate-100 px-4 text-sm text-slate-600 cursor-not-allowed">
+          <input id="editAccountId" type="text" required class="focus-ring mono h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800">
         </label>
 
         <label class="block">
@@ -1097,6 +1097,7 @@
     let tokens = [];
     let accounts = [];
     let currentAccountTokens = [];
+    let currentEditAccountId = "";
     let activeWorkspace = "accounts";
     let currentDetailAccountId = "";
     let targetDeleteAccountId = "";
@@ -2716,6 +2717,7 @@
 
     function openEditModal(account) {
       if (!account) return;
+      currentEditAccountId = account.accountId;
       els.editAccountId.value = account.accountId;
       els.editAccountPassword.value = account.accountPassword || "";
       els.editTotpSecret.value = account.totpSecret || "";
@@ -2736,7 +2738,7 @@
 
     async function saveEditAccount() {
       const adminPassword = els.adminPassword.value;
-      const accountId = els.editAccountId.value.trim();
+      const newAccountId = els.editAccountId.value.trim();
       const accountPassword = els.editAccountPassword.value.trim();
       const totpSecret = els.editTotpSecret.value.trim();
       const gptTotpSecret = els.editGptTotpSecret.value.trim();
@@ -2755,7 +2757,8 @@
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             adminPassword,
-            accountId,
+            accountId: currentEditAccountId,
+            newAccountId,
             accountPassword,
             totpSecret,
             gptTotpSecret,
@@ -2776,7 +2779,8 @@
         }
 
         closeModal("editAccountDialog");
-        showAccountMessage("ok", `账号「${accountId}」修改保存成功。`);
+        currentEditAccountId = "";
+        showAccountMessage("ok", `账号「${newAccountId}」修改保存成功。`);
         await loadAccounts({ silent: true });
         await loadTokens({ silent: true });
       } catch (err) {

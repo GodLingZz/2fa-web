@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { onRequest as accountsEndpoint } from "../functions/api/admin/accounts.js";
 import { onRequest as accountTokensEndpoint } from "../functions/api/admin/account-tokens.js";
 import { onRequest as accountGenerateTokensEndpoint } from "../functions/api/admin/account-generate-tokens.js";
@@ -102,15 +103,18 @@ function createMockEnv() {
               return { meta: { changes: 1 } };
             }
             if (query.includes("UPDATE accounts")) {
-              const [pass, totp, gptTotp, status, note, account_id] = args;
+              const [nextAccountId, pass, totp, gptTotp, status, note, account_id] = args;
               const acc = accountsTable.get(account_id);
               if (acc) {
+                accountsTable.delete(account_id);
+                acc.account_id = nextAccountId;
                 acc.account_password_encrypted = pass;
                 acc.totp_secret_encrypted = totp;
                 acc.gpt_totp_secret_encrypted = gptTotp;
                 acc.status = status;
                 acc.note = note;
                 acc.updated_at = new Date().toISOString();
+                accountsTable.set(nextAccountId, acc);
               }
               return { meta: { changes: 1 } };
             }
@@ -125,6 +129,19 @@ function createMockEnv() {
                 if (v.account_id === id) tokensTable.delete(k);
               }
               return { meta: { changes: 1 } };
+            }
+            if (query.includes("UPDATE tokens") && query.includes("SET account_id = ?")) {
+              const [nextAccountId, accountId] = args;
+              for (const token of tokensTable.values()) {
+                if (token.account_id === accountId) token.account_id = nextAccountId;
+              }
+              return { meta: { changes: 1 } };
+            }
+            if (query.includes("UPDATE tokens") && query.includes("SET status = ?")) {
+              const [status, tokenCode] = args;
+              const token = tokensTable.get(tokenCode);
+              if (token) token.status = status;
+              return { meta: { changes: token ? 1 : 0 } };
             }
             if (query.includes("UPDATE tokens")) {
               return { meta: { changes: 1 } };
@@ -224,6 +241,130 @@ test("accounts GET endpoint returns accounts with decrypted credentials and toke
   assert.equal(data.accounts[0].totpSecret, "JBSWY3DPEHPK3PXP");
   assert.equal(data.accounts[0].gptTotpSecret, "JBSWY3DPEHPK3PXQ");
   assert.equal(data.accounts[0].status, "active");
+});
+
+test("renaming an account updates all of its tokens regardless of status", async () => {
+  const env = createMockEnv();
+  const createReq = new Request("https://example.com/api/admin/accounts", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      adminPassword: "admin123",
+      accountId: "before_rename",
+      accountPassword: "Password123!",
+      totpSecret: "JBSWY3DPEHPK3PXP",
+      initialTokensCount: 3
+    })
+  });
+  const createRes = await accountsEndpoint({ request: createReq, env });
+  const created = await createRes.json();
+
+  for (const [index, status] of ["active", "used", "disabled"].entries()) {
+    const statusReq = new Request("https://example.com/api/admin/account-tokens", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ adminPassword: "admin123", tokenCode: created.tokens[index], status })
+    });
+    const statusRes = await accountTokensEndpoint({ request: statusReq, env });
+    assert.equal(statusRes.status, 200);
+  }
+
+  const renameReq = new Request("https://example.com/api/admin/accounts", {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      adminPassword: "admin123",
+      accountId: "before_rename",
+      newAccountId: "after_rename",
+      accountPassword: "Password123!",
+      totpSecret: "JBSWY3DPEHPK3PXP",
+      status: "active",
+      note: "已改名",
+      syncActiveTokens: false
+    })
+  });
+  const renameRes = await accountsEndpoint({ request: renameReq, env });
+  const renameData = await renameRes.json();
+
+  assert.equal(renameRes.status, 200);
+  assert.equal(renameData.ok, true);
+
+  const getReq = new Request("https://example.com/api/admin/accounts?adminPassword=admin123");
+  const getRes = await accountsEndpoint({ request: getReq, env });
+  const accountData = await getRes.json();
+  assert.equal(accountData.accounts.length, 1);
+  assert.equal(accountData.accounts[0].accountId, "after_rename");
+
+  const tokensReq = new Request("https://example.com/api/admin/account-tokens?adminPassword=admin123&accountId=after_rename&status=all");
+  const tokensRes = await accountTokensEndpoint({ request: tokensReq, env });
+  const tokenData = await tokensRes.json();
+  assert.deepEqual(tokenData.tokens.map(token => token.accountId), ["after_rename", "after_rename", "after_rename"]);
+  assert.deepEqual(new Set(tokenData.tokens.map(token => token.status)), new Set(["active", "used", "disabled"]));
+});
+
+test("renaming an account to an existing ID returns a conflict without changing either account", async () => {
+  const env = createMockEnv();
+
+  for (const accountId of ["rename_source", "rename_target"]) {
+    const createReq = new Request("https://example.com/api/admin/accounts", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        adminPassword: "admin123",
+        accountId,
+        accountPassword: "Password123!",
+        totpSecret: "JBSWY3DPEHPK3PXP",
+        initialTokensCount: 1
+      })
+    });
+    const createRes = await accountsEndpoint({ request: createReq, env });
+    assert.equal(createRes.status, 200);
+  }
+
+  const renameReq = new Request("https://example.com/api/admin/accounts", {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      adminPassword: "admin123",
+      accountId: "rename_source",
+      newAccountId: "rename_target",
+      accountPassword: "Password123!",
+      totpSecret: "JBSWY3DPEHPK3PXP",
+      status: "active"
+    })
+  });
+  const renameRes = await accountsEndpoint({ request: renameReq, env });
+  const renameData = await renameRes.json();
+
+  assert.equal(renameRes.status, 409);
+  assert.equal(renameData.error, "ACCOUNT_EXISTS");
+
+  const sourceTokensReq = new Request("https://example.com/api/admin/account-tokens?adminPassword=admin123&accountId=rename_source");
+  const sourceTokensRes = await accountTokensEndpoint({ request: sourceTokensReq, env });
+  const sourceTokens = await sourceTokensRes.json();
+  assert.equal(sourceTokens.tokens.length, 1);
+  assert.equal(sourceTokens.tokens[0].accountId, "rename_source");
+
+  const targetTokensReq = new Request("https://example.com/api/admin/account-tokens?adminPassword=admin123&accountId=rename_target");
+  const targetTokensRes = await accountTokensEndpoint({ request: targetTokensReq, env });
+  const targetTokens = await targetTokensRes.json();
+  assert.equal(targetTokens.tokens.length, 1);
+  assert.equal(targetTokens.tokens[0].accountId, "rename_target");
+
+  const getReq = new Request("https://example.com/api/admin/accounts?adminPassword=admin123");
+  const getRes = await accountsEndpoint({ request: getReq, env });
+  const accountData = await getRes.json();
+  assert.deepEqual(new Set(accountData.accounts.map(account => account.accountId)), new Set(["rename_source", "rename_target"]));
+});
+
+test("account edit form allows changing the ID and sends both current and new IDs", async () => {
+  const html = await readFile(new URL("../admin-console.html", import.meta.url), "utf8");
+  const editAccountIdInput = html.match(/<input id="editAccountId"([^>]*)>/)?.[1] || "";
+
+  assert.notEqual(editAccountIdInput, "");
+  assert.doesNotMatch(editAccountIdInput, /\breadonly\b/i);
+  assert.match(html, /currentEditAccountId/);
+  assert.match(html, /accountId:\s*currentEditAccountId,\s*newAccountId,/);
 });
 
 test("account-tokens GET returns tokens belonging to specific account and supports limit=1", async () => {
